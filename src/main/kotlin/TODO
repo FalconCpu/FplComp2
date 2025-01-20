@@ -1,0 +1,20 @@
+
+ShortTerm:
+   class
+   when statement
+   repeat until
+   string comparison
+   stdlib: printf
+   stdlib: malloc
+
+Medium Term:
+   peephole optimization
+   register allocation
+   asm code generation
+
+Longer Term:
+   inheritance
+   abstract class
+   path dependant types
+   generics?
+
