@@ -15,6 +15,7 @@ enum class StopAt {
 fun compile(files:List<Lexer>, stopAt:StopAt) : String {
     Log.clear()
     allFunctions.clear()
+    DataSegment.clear()
 
     val ast = AstTopLevel()
     for (lexer in files) {

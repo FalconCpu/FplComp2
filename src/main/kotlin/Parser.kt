@@ -144,6 +144,8 @@ class Parser(private val lexer: Lexer) {
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NOT))
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
+        if (canTake(NEW))
+            return AstNew(lookahead.location, parsePrefix())
         return parsePostfix()
     }
 
@@ -263,13 +265,14 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseParameter() : AstParameter {
         val id = parseIdentifier()
+        val type : AstType
         if (canTake(COLON)) {
-            val type = parseType()
-            return AstParameter(id.location, id, type)
+            type = parseType()
         } else {
             Log.error(lookahead.location, "Expected type after identifier")
-            return AstParameter(id.location, id, null)
+            type = AstTypeIdentifier(id.location, "Int")
         }
+        return AstParameter(id.location, EOL, id, type)
     }
 
     private fun parseParameterList() : List<AstParameter> {
@@ -403,6 +406,62 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
     }
 
+    private fun parseClassParameter() : AstParameter {
+        val kind = if (lookahead.kind==VAR || lookahead.kind==VAL) nextToken().kind else EOL
+        val id = parseIdentifier()
+        val type : AstType
+        if (canTake(COLON)) {
+            type = parseType()
+        } else {
+            Log.error(lookahead.location, "Expected type after identifier")
+            type = AstTypeIdentifier(id.location, "Int")
+        }
+        return AstParameter(id.location, kind, id, type)
+    }
+
+    private fun parseClassParameterList() : List<AstParameter> {
+        val ret = mutableListOf<AstParameter>()
+        if (lookahead.kind!=OPENB)
+            return ret
+        expect(OPENB)
+        if (lookahead.kind!=CLOSEB)
+            do {
+                ret.add(parseClassParameter())
+            } while (canTake(COMMA))
+        expect(CLOSEB)
+        return ret
+    }
+
+    private fun parseClassBody(block:AstBlock) {
+        expect(INDENT)
+        while (lookahead.kind != DEDENT && lookahead.kind != EOF) {
+            try {
+                parseClassStatement(block)
+            } catch (e: ParseError) {
+                Log.error(e.message!!)
+                skipToEol()
+            }
+        }
+        expect(DEDENT)
+    }
+
+    private fun parseClass(block: AstBlock) {
+        expect(CLASS)
+        val id = parseIdentifier()
+        val params = parseClassParameterList()
+        expectEol()
+        val type = ClassType.make(id.name)
+        val ret = AstClass(id.location, id.name, params, type, block)
+        val sym = TypeSymbol(id.location, id.name, type)
+        block.symbolTable.add(sym)
+        block.add(ret)
+
+        if (lookahead.kind == INDENT)
+            parseClassBody(ret)
+        parseOptionalEnd(CLASS)
+    }
+
+
     private fun parseStatement(block:AstBlock) {
         when (lookahead.kind) {
             VAR -> parseVarDecl(block)
@@ -412,16 +471,34 @@ class Parser(private val lexer: Lexer) {
             IDENTIFIER, OPENB -> parseAssign(block)
             FOR -> parseFor(block)
             IF -> parseIf(block)
+            CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
         }
     }
+
+    private fun parseClassStatement(block:AstBlock) {
+        when (lookahead.kind) {
+            VAR -> parseVarDecl(block)
+            VAL -> parseVarDecl(block)
+            FUN -> parseFunction(block)
+            CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
+            RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed in classes")
+            WHILE -> throw ParseError(lookahead.location, "While statements are not allowed in classes")
+            IDENTIFIER, OPENB -> throw ParseError(lookahead.location, "Assignments are not allowed in classes")
+            FOR -> throw ParseError(lookahead.location, "For statements are not allowed in classes")
+            IF -> throw ParseError(lookahead.location, "If statements are not allowed in classes")
+            else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
+        }
+    }
+
 
     private fun parseTopStatement(block:AstBlock) {
         when (lookahead.kind) {
             VAR -> parseVarDecl(block)
             VAL -> parseVarDecl(block)
             FUN -> parseFunction(block)
+            CLASS -> parseClass(block)
             WHILE -> throw ParseError(lookahead.location, "While statements are not allowed at top level")
             RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed at top level")
             FOR -> throw ParseError(lookahead.location, "For statements are not allowed at top level")

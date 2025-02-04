@@ -375,4 +375,101 @@ class TypeCheckingTest {
             """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun classTest() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+            
+            fun main()
+                val cat = Cat("Fluffy", 3)
+                val a = cat.age
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class Cat
+              Function main
+                Declare cat Cat
+                  Constructor (Cat)
+                    StringLit "Fluffy" String
+                    IntLit 3 Int
+                Declare a Int
+                  Member age (Int)
+                    Variable cat Cat
+            
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun notClassTest() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+            
+            fun main()
+                val cat = 23
+                val a = cat.age
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:5.16: Not a class
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun callNonFunc() {
+        val input = """
+            fun main()
+                val f = 23
+                val b = f(2)
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:3.14: Call on non-function type Int
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun notTypeExpression() {
+        val input = """
+            fun main()
+                val f = 23
+                val b : f = 4
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:3.13: Type 'f' is a variable not a type
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun newClassTest() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+            
+            fun main()
+                val cat = new Cat("fluffy",5)
+                val a = cat.age
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class Cat
+              Function main
+                Declare cat Cat*
+                  New (Cat*)
+                    Constructor (Cat)
+                      StringLit "fluffy" String
+                      IntLit 5 Int
+                Declare a Int
+                  Member age (Int)
+                    Variable cat Cat*
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
 }

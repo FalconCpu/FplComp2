@@ -51,6 +51,10 @@ fun TastExpression.codeGen() : IRVal {
         }
 
         is TastFunctionLiteral -> TODO()
+        is TastTypeDescriptor -> TODO()
+        is TastConstructor -> TODO()
+        is TastNeg -> TODO()
+        is TastNew -> TODO()
     }
 }
 
@@ -111,7 +115,7 @@ fun TastStatement.codeGen() {
 
         is TastFunction -> TODO()
         is TastTopLevel -> TODO()
-
+        is TastClass -> TODO()
         is TastWhile -> {
             val labelStart = currentFunc.newLabel()
             val labelCond = currentFunc.newLabel()

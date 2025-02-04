@@ -35,6 +35,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     TO("to", true),
     AND("and", true),
     OR("or", true),
+    NEW("new",true),
     NOT("not", true),
     TILDE("~", true),
     LSL("lsl", true),

@@ -7,12 +7,14 @@ sealed class Symbol(val location: Location, val name:String, val type: Type) {
 class VarSymbol(location: Location, name: String, type: Type, val mutable:Boolean) : Symbol(location, name, type)
 class FunctionSymbol(location: Location, name: String, type: FunctionType, val function: Function) : Symbol(location, name, type)
 class TypeSymbol(location: Location, name: String, type: Type) : Symbol(location, name, type)
+object UndefinedSymbol : Symbol(Location.nullLocation, "<undefined>", UndefinedType)
 
-class FieldSymbol(location: Location, name: String, type: Type) : Symbol(location, name, type) {
+
+class FieldSymbol(location: Location, name: String, type: Type, val mutable: Boolean) : Symbol(location, name, type) {
     var offset = 0
 }
 
-val lengthSymbol = FieldSymbol(Location.nullLocation, "length", IntType).also { it.offset = -4 }
+val lengthSymbol = FieldSymbol(Location.nullLocation, "length", IntType, false).also { it.offset = -4 }
 
 
 // ----------------------------------------------------------------------------

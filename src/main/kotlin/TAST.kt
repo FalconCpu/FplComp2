@@ -55,6 +55,12 @@ sealed class Tast(val location: Location) {
                     stmt.dump(indent + 1, sb)
             }
 
+            is TastClass -> {
+                sb.append("Class ${constructor.name}\n")
+                for (stmt in statements)
+                    stmt.dump(indent + 1, sb)
+            }
+
             is TastAssign -> {
                 sb.append("Assign\n")
                 lhs.dump(indent + 1, sb)
@@ -127,6 +133,27 @@ sealed class Tast(val location: Location) {
                 for (clause in clauses)
                     clause.dump(indent + 1, sb)
             }
+
+            is TastTypeDescriptor -> {
+                sb.append("Type Descriptor ($type)\n")
+            }
+
+            is TastConstructor -> {
+                sb.append("Constructor ($type)\n")
+                for(arg in args)
+                    arg.dump(indent+1, sb)
+            }
+
+            is TastNeg -> {
+                sb.append("Neg ($type)\n")
+                expr.dump(indent + 1, sb)
+            }
+
+            is TastNew -> {
+                sb.append("New ($type)\n")
+                expr.dump(indent + 1, sb)
+            }
+
         }
     }
 }
@@ -166,6 +193,11 @@ class TastCast(location: Location, val expr: TastExpression, type: Type) : TastE
 class TastIndex(location: Location, val expr: TastExpression, val index: TastExpression, type:Type) : TastExpression(location, type)
 class TastFunctionCall(location: Location, val func: TastExpression, val args: List<TastExpression>, type:Type) : TastExpression(location, type)
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type) : TastExpression(location, type)
+class TastTypeDescriptor(location: Location, type:Type) : TastExpression(location,type)
+class TastConstructor(location: Location, val args:List<TastExpression>, type:Type) : TastExpression(location,type)
+class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
+class TastNew(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
+
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
     init {
@@ -212,3 +244,8 @@ class TastIfClause(location: Location, val expr: TastExpression?, symbolTable: S
     : TastBlock(location, symbolTable) {
         lateinit var label : Label
     }
+
+class TastClass(location: Location, symbolTable: SymbolTable, val constructor: Function)
+    : TastBlock(location, symbolTable) {
+    lateinit var label : Label
+}

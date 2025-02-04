@@ -22,6 +22,7 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
                 is FieldSymbol -> makeErrorType(location, "Type '$name' is a field not a type")
                 is FunctionSymbol -> makeErrorType(location, "Type '$name' is a function not a type")
                 is VarSymbol -> makeErrorType(location, "Type '$name' is a variable not a type")
+                is UndefinedSymbol -> error("Undefined symbol")
             }
         }
 
@@ -107,14 +108,15 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
             when (sym) {
                 is FieldSymbol -> TODO()
                 is FunctionSymbol -> TastFunctionLiteral(location, sym.function, sym.type)
-                is TypeSymbol -> TastError(location, "Type '$name' is a type not a variable")
+                is TypeSymbol -> TastTypeDescriptor(location, sym.type)
                 is VarSymbol -> TastVariable(location, sym, sym.type)
+                is UndefinedSymbol -> error("Got undefined symbol in type checking")
             }
         }
 
         is AstBinaryOp -> {
-            val lhs = left.typeCheck(scope)
-            val rhs = right.typeCheck(scope)
+            val lhs = left.typeCheckRvalue(scope)
+            val rhs = right.typeCheckRvalue(scope)
             val binop = if (lhs.type== ErrorType || rhs.type==ErrorType) errorBinop else
                 binopTable.firstOrNull { it.op == op && it.left==lhs.type && it.right==rhs.type} ?:
                 errorBinop.also { Log.error(location, "No operation '${op.text}' for types ${lhs.type} and ${rhs.type}") }
@@ -133,14 +135,14 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
         }
 
         is AstCast -> {
-            val expr = expr.typeCheck(scope)
+            val expr = expr.typeCheckRvalue(scope)
             val type = type.resolveType(scope)
              TastCast(location, expr, type)
         }
 
         is AstIndex -> {
-            val expr = expr.typeCheck(scope)
-            val index = index.typeCheck(scope)
+            val expr = expr.typeCheckRvalue(scope)
+            val index = index.typeCheckRvalue(scope)
             IntType.checkType(index)
             val type = if (expr.type is ArrayType) expr.type.elementType else
                        if (expr.type is StringType) CharType else
@@ -151,30 +153,71 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
 
         is AstFunctionCall -> {
             val expr = expr.typeCheck(scope)
-            val args = args.map { it.typeCheck(scope) }
-            val type = if (expr.type is FunctionType) {
-                if (args.size != expr.type.parameterTypes.size)
-                    Log.error(location, "Expected ${expr.type.parameterTypes.size} arguments, got ${args.size}")
-                else {
-                    for (i in args.indices)
-                        expr.type.parameterTypes[i].checkType(args[i])
-                }
-                expr.type.returnType
-            } else
-                makeErrorType(location, "Call on non-function type ${expr.type}")
-            TastFunctionCall(location, expr, args, type)
+            val args = args.map { it.typeCheckRvalue(scope) }
+
+            if (expr.type is FunctionType) {
+                typeCheckArgList(location, args, expr.type.parameterTypes)
+                TastFunctionCall(location, expr, args, expr.type.returnType)
+            } else if (expr is TastTypeDescriptor && expr.type is ClassType) {
+                typeCheckArgList(location, args, expr.type.constructor.parameters.map{it.type} )
+                TastConstructor(location, args, expr.type)
+            } else {
+                TastError(location,"Call on non-function type ${expr.type}")
+            }
         }
 
         is AstMember -> {
-            val expr = expr.typeCheck(scope)
+            val expr = expr.typeCheckRvalue(scope)
             if (expr.type is StringType && name == "length")
                 TastMember(location, expr, lengthSymbol, IntType)
-            else
-                TODO()
+            else if (expr.type is ClassType) {
+                val sym = expr.type.fields.find { it.name == name } ?:
+                    FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"),false)
+                TastMember(location, expr, sym, sym.type)
+            } else if (expr.type is PointerType && expr.type.elementType is ClassType) {
+                    val sym = expr.type.elementType.fields.find{it.name==name} ?:
+                    FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"), false)
+                    TastMember(location,expr,sym, sym.type)
+            } else {
+                TastError(location,"Not a class")
+            }
         }
+
         is AstUnaryOp -> TODO()
 
+        is AstNew -> {
+            val expr = expr.typeCheckRvalue(scope)
+            val type = PointerType.make(expr.type)
+            TastNew(location, expr, type)
+        }
+
+
     }
+}
+
+// ----------------------------------------------------------------------------
+//                        Rvalue
+// ----------------------------------------------------------------------------
+
+private fun AstExpression.typeCheckRvalue(scope:SymbolTable) : TastExpression {
+    val ret = typeCheck(scope)
+    if (ret is TastTypeDescriptor)
+        Log.error(location,"Got type descriptor when expected rvalue")
+    return ret
+}
+
+// ----------------------------------------------------------------------------
+//                        ArgList
+// ----------------------------------------------------------------------------
+
+private fun typeCheckArgList(location:Location, args:List<TastExpression>, parameters:List<Type>) {
+    if (args.size != parameters.size)
+        Log.error(location, "Expected ${parameters.size} arguments, got ${args.size}")
+    else {
+        for (i in args.indices)
+            parameters[i].checkType(args[i])
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -264,6 +307,11 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val clauses = clauses.map { it.typeCheck(scope) as TastIfClause }
             TastIf(location, clauses)
         }
+
+        is AstClass -> {
+            // TODO add support for fields
+            TastClass(location,symbolTable,constructor)
+        }
     }
 }
 
@@ -271,13 +319,11 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
 //                          generate Symbols
 // ----------------------------------------------------------------------------
 
-private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol {
-    val tcType = type?.resolveType(scope) ?:
-        makeErrorType(id.location,"Cannot determine type for '$id'")
-    val sym = VarSymbol(id.location, id.name, tcType, false)
-    scope.add(sym)
-    return sym
+private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol{
+    val tcType = type.resolveType(scope)
+    return VarSymbol(id.location, id.name, tcType, false)
 }
+
 
 // ----------------------------------------------------------------------------
 //                          Identify Functions
@@ -289,16 +335,44 @@ private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol {
 private fun AstBlock.identifyFunctions(scope: SymbolTable) {
     for (stmt in statements)
         if (stmt is AstFunction) {
-            val tcParams = stmt.params.map{it.generateSymbol(stmt.symbolTable)}
+            val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
             val resultType = stmt.retType?.resolveType(scope) ?: UnitType
-            val functionType = FunctionType.make(tcParams.map{it.type}, resultType)
+            val functionType = FunctionType.make(tcParams.map { it.type }, resultType)
             stmt.function = Function(stmt.location, stmt.name, tcParams, resultType)
             val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
+            tcParams.forEach{ stmt.symbolTable.add(it) }
             scope.add(sym)
+
+        } else if (stmt is AstClass) {
+            val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
+            stmt.constructor = Function(stmt.location, stmt.name, tcParams, UnitType)
+            stmt.klass.constructor = stmt.constructor
+            for(i in tcParams.indices) {
+                if (stmt.params[i].kind== TokenKind.EOL)
+                    stmt.symbolTable.add(tcParams[i])
+                else {
+                    val field = FieldSymbol(tcParams[i].location, tcParams[i].name, tcParams[i].type, (stmt.params[i].kind== TokenKind.VAR))
+                    stmt.klass.add(field)
+                    stmt.symbolTable.add(field)
+                }
+            }
 
         } else if (stmt is AstBlock) {
             stmt.identifyFunctions(scope)
         }
+}
+
+// ---------------------------------------------------------------------------
+//                             Identify Fields
+// ---------------------------------------------------------------------------
+// Before the main type checking, we do a pass through the AST to identify all fields
+// and their types
+
+private fun AstClass.identifyFields(scope:SymbolTable) {
+    for (param in params) {
+        val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
+        scope.add(sym)
+    }
 }
 
 
@@ -309,6 +383,10 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
 fun AstTopLevel.typeCheck() : TastTopLevel {
     val ret = TastTopLevel(location, symbolTable)
     identifyFunctions(symbolTable)
+
+    for(cls in statements.filterIsInstance<AstClass>())
+        cls.identifyFields(symbolTable)
+
     currentFunction = ret.function
     for (stmt in statements)
         ret.add(stmt.typeCheck(symbolTable))

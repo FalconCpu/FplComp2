@@ -27,7 +27,7 @@ sealed class Type(private val name:String) {
         is ArrayType -> 4
         is FunctionType -> 4
         is PointerType -> 4
-        is StructType -> 4
+        is ClassType -> classSize
     }
 
 }
@@ -68,11 +68,21 @@ class  ArrayType(val elementType: Type) : Type("Array<$elementType>") {
 //                       Struct Types
 // ----------------------------------------------------------------------------
 
-class  StructType(name:String) : Type(name) {
+class  ClassType(name:String) : Type(name) {
+    val fields = mutableListOf<FieldSymbol>()
+    var classSize = 0
+    lateinit var constructor : Function
+
+    fun add(field: FieldSymbol) {
+        field.offset = classSize
+        classSize += field.type.getSize()
+        fields += field
+    }
+
     companion object {
-        private val allStructTypes = mutableListOf<StructType>()
-        fun make(name: String): StructType {
-            val new = StructType(name)
+        private val allStructTypes = mutableListOf<ClassType>()
+        fun make(name: String): ClassType {
+            val new = ClassType(name)
             allStructTypes.add(new)
             return new
         }
@@ -86,7 +96,9 @@ class  StructType(name:String) : Type(name) {
 class  PointerType(val elementType: Type) : Type("$elementType*") {
     companion object {
         private val allPointerTypes = mutableMapOf<Type, PointerType>()
-        fun make(elementType: Type): PointerType {
+        fun make(elementType: Type): Type {
+            if (elementType== ErrorType)
+                return ErrorType
             return allPointerTypes.getOrPut(elementType) { PointerType(elementType) }
         }
     }
