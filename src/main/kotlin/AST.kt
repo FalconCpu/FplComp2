@@ -32,6 +32,13 @@ sealed class AstNode (val location:Location) {
                 expr?.dump(indent+1, sb)
             }
 
+            is AstDeclareField-> {
+                sb.append("DeclareField $decl\n")
+                id.dump(indent+1, sb)
+                type?.dump(indent+1, sb)
+                expr?.dump(indent+1, sb)
+            }
+
             is AstTopLevel -> {
                 sb.append("TopLevel\n")
                 for (stmt in statements)
@@ -193,6 +200,13 @@ class AstTypePointer(location: Location, val expr:AstType, val nullable: Boolean
 // Statement classes
 class AstDeclareVar(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)
     : AstStatement(location)
+
+class AstDeclareField(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)
+    : AstStatement(location) {
+        var tcExpr : TastExpression? = null
+        lateinit var symbol : FieldSymbol
+    }
+
 class AstReturn(location: Location, val expr: AstExpression?) : AstStatement(location)
 class AstAssign(location: Location, val lhs: AstExpression, val rhs: AstExpression) : AstStatement(location)
 class AstExpressionStatement(location: Location, val expr: AstExpression) : AstStatement(location)

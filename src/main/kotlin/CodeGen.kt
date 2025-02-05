@@ -140,6 +140,14 @@ fun TastStatement.codeGen() {
                 currentFunc.add(InstrMov(currentFunc.mapSymbol(symbol), rhs))
             }
 
+        is TastDeclareField -> {
+            if (expr != null) {
+                val rhs = expr.codeGen()
+                val thisSym = currentFunc.mapSymbol(currentFunc.thisSymbol!!)
+                currentFunc.addStoreField(symbol.type.getSize(), rhs, thisSym, symbol)
+            }
+        }
+
         is TastExpressionStatement -> {
             expr.codeGen()
         }

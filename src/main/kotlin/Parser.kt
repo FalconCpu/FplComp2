@@ -269,6 +269,16 @@ class Parser(private val lexer: Lexer) {
         block.add(AstDeclareVar(tok.location, tok.kind, id, optType, optInit))
     }
 
+    private fun parseFieldDecl(block:AstBlock) {
+        val tok = nextToken()
+        val id = parseIdentifier()
+        val optType = parseOptType()
+        val optInit = parseOptInitializer()
+        expectEol()
+        block.add(AstDeclareField(tok.location, tok.kind, id, optType, optInit))
+    }
+
+
     private fun parseParameter() : AstParameter {
         val id = parseIdentifier()
         val type : AstType
@@ -485,15 +495,12 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseClassStatement(block:AstBlock) {
         when (lookahead.kind) {
-            VAR -> parseVarDecl(block)
-            VAL -> parseVarDecl(block)
+            VAR -> parseFieldDecl(block)
+            VAL -> parseFieldDecl(block)
             FUN -> parseFunction(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
-            RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed in classes")
-            WHILE -> throw ParseError(lookahead.location, "While statements are not allowed in classes")
-            IDENTIFIER, OPENB -> throw ParseError(lookahead.location, "Assignments are not allowed in classes")
-            FOR -> throw ParseError(lookahead.location, "For statements are not allowed in classes")
-            IF -> throw ParseError(lookahead.location, "If statements are not allowed in classes")
+            RETURN, WHILE, IDENTIFIER, OPENB, FOR, IF ->
+                throw ParseError(lookahead.location, "Statements not allowed in class body")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
         }
     }

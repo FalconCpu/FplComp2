@@ -17,7 +17,7 @@ class ExecuteTest {
                 var sevenSeg : Int
                 var led : Int
                 var sw : Int
-                var key : Int
+                var key : Int 
                 var uartTx : Int
             
             fun main()

@@ -154,6 +154,10 @@ sealed class Tast(val location: Location) {
                 expr.dump(indent + 1, sb)
             }
 
+            is TastDeclareField -> {
+                sb.append("DeclareField $symbol\n")
+                expr?.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -217,6 +221,8 @@ class TastAssign(location: Location, val lhs: TastExpression, val rhs: TastExpre
 class TastExpressionStatement(location: Location, val expr: TastExpression) : TastStatement(location)
 class TastReturn(location: Location, val expr: TastExpression?) : TastStatement(location)
 class TastIf(location: Location, val clauses:List<TastIfClause>) : TastStatement(location)
+
+class TastDeclareField(location: Location, val symbol: FieldSymbol, val expr: TastExpression?) : TastStatement(location)
 
 // Blocks
 sealed class TastBlock(location: Location, val symbolTable: SymbolTable) : TastStatement(location) {

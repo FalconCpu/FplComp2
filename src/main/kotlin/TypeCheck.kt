@@ -274,6 +274,10 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             TastDeclareVar(this.location, sym, tcExpr)
         }
 
+        is AstDeclareField -> {
+            TastDeclareField(location, symbol, tcExpr)
+        }
+
         is AstExpressionStatement -> {
             val expr = expr.typeCheck(scope)
             TastExpressionStatement(location, expr)
@@ -347,6 +351,8 @@ private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol{
 }
 
 
+
+
 // ----------------------------------------------------------------------------
 //                          Identify Functions
 // ----------------------------------------------------------------------------
@@ -394,6 +400,23 @@ private fun AstClass.identifyFields(scope:SymbolTable) {
     for (param in params) {
         val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
         scope.add(sym)
+    }
+
+    for (stmt in statements) {
+        if (stmt is AstDeclareField) {
+            val tcExpr = stmt.expr?.typeCheck(scope)
+
+            val type = stmt.type?.resolveType(scope) ?:
+                       tcExpr?.type ?:
+                       makeErrorType(stmt.id.location,"Cannot determine type for '${stmt.id.name}'")
+
+            val sym = FieldSymbol(stmt.id.location, stmt.id.name, type, stmt.decl== TokenKind.VAR)
+            tcExpr?.checkType(sym.type)
+            scope.add(sym)
+            klass.add(sym)
+            stmt.symbol = sym
+            stmt.tcExpr = tcExpr
+        }
     }
 }
 

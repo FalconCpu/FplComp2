@@ -40,3 +40,13 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Local debug files
+/asm.f32
+/asm.hex
+/asm.labels
+/sim_blit.log
+/sim_reg.log
+/sim_trace.log
+/sim_traace.log
+/sim_uart.log
