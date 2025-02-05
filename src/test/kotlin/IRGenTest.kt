@@ -19,7 +19,7 @@ class IRGenTest {
 
         val expected = """
             Function <TopLevel>:
-            START 
+            START
             MOV #0, 18
             MOV a, #0
             MOV #1, 3
@@ -27,7 +27,7 @@ class IRGenTest {
             MOV #3, 1
             ADDI #4, #2, #3
             MOV b, #4
-            RET null
+            RET []
 
 
         """.trimIndent()
@@ -58,11 +58,11 @@ class IRGenTest {
 
         val expected = """
             Function <TopLevel>:
-            START 
-            RET null
+            START
+            RET []
 
             Function foo:
-            START 
+            START
             MOV #0, 0
             MOV a, #0
             JMP @2
@@ -76,7 +76,7 @@ class IRGenTest {
             JMP @3
             @3:
             @0:
-            RET null
+            RET []
 
 
         """.trimIndent()
@@ -96,11 +96,12 @@ class IRGenTest {
         """.trimIndent()
         val expected = """
             Function <TopLevel>:
-            START 
-            RET null
+            START
+            RET []
 
             Function printString:
-            START s
+            START
+            MOV s, $1
             MOV #0, -536870912
             MOV #1, #0
             MOV hwregs, #1
@@ -122,14 +123,14 @@ class IRGenTest {
             BLTI i, #3, @1
             @3:
             @0:
-            RET null
+            RET []
 
             Function main:
-            START 
+            START
             LEA #0, "Hello, world!"
             CALL printString(#0)
             @0:
-            RET null
+            RET []
 
 
         """.trimIndent()
@@ -150,18 +151,19 @@ class IRGenTest {
 
         val expected = """
             Function <TopLevel>:
-            START 
-            RET null
-
+            START
+            RET []
+            
             Function foo:
-            START a
-            MOV #1, 0
-            BEQI a, #1, @3
+            START
+            MOV a, $1
+            MOV #0, 0
+            BEQI a, #0, @3
             JMP @2
             @2:
             JMP @1
-            MOV #2, 1
-            BEQI a, #2, @5
+            MOV #1, 1
+            BEQI a, #1, @5
             JMP @4
             @4:
             JMP @1
@@ -169,24 +171,24 @@ class IRGenTest {
             @6:
             JMP @1
             @3:
-            LEA #3, "zero"
-            MOV #0, #3
+            LEA #2, "zero"
+            MOV $8, #2
             JMP @0
             JMP @1
             @5:
-            LEA #4, "one"
-            MOV #0, #4
+            LEA #3, "one"
+            MOV $8, #3
             JMP @0
             JMP @1
             @7:
-            LEA #5, "other"
-            MOV #0, #5
+            LEA #4, "other"
+            MOV $8, #4
             JMP @0
             JMP @1
             @1:
             @0:
-            RET #0
-
+            RET [$8]
+            
 
             """.trimIndent()
         runTest(input, expected)

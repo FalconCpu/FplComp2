@@ -6,14 +6,19 @@ class Function(
     val location: Location,
     val name : String,
     val parameters: List<VarSymbol>,
-    val returnType: Type
+    val returnType: Type,
+    methodOf : ClassType?
 ) {
     val prog = mutableListOf<Instr>()
-    val tempVars = mutableListOf<IRTemp>()
+    val vars = machineRegs.toMutableList<IRVal>()
     val labels = mutableListOf<Label>()
+
     val symbols = mutableMapOf<VarSymbol, IRVar>()
-    val retVal = if (returnType!= UnitType) newTemp() else null
+    val retVal = if (returnType!= UnitType) machineRegs[8] else null
     val retLabel = newLabel()
+    var maxRegister = 0
+    var stackVarsSize = 0
+    val thisSymbol = if (methodOf!=null) VarSymbol(location, "this", methodOf, false) else null
 
     init {
         allFunctions.add(this)
@@ -25,9 +30,10 @@ class Function(
         prog.add(instr)
     }
 
+    var numTemps = 0
     fun newTemp() : IRTemp {
-        val temp = IRTemp("#${tempVars.size}")
-        tempVars.add(temp)
+        val temp = IRTemp("#${numTemps++}")
+        vars += temp
         return temp
     }
 
@@ -82,6 +88,10 @@ class Function(
         add(InstrStore(size, value, addr, offset))
     }
 
+    fun addStoreField(size:Int, value:IRVal, addr: IRVal, offset: FieldSymbol) {
+        add(InstrStoreField(size, value, addr, offset))
+    }
+
     fun addBranch(op:AluOp, left:IRVal, right:IRVal, label:Label) {
         add(InstrBranch(op, left, right, label))
     }
@@ -91,7 +101,7 @@ class Function(
     }
 
     fun addLabel(label:Label) {
-        label.addr = prog.size
+        label.index = prog.size
         add(InstrLabel(label))
     }
 
@@ -107,8 +117,8 @@ class Function(
         return ret
     }
 
-    fun mapSymbol(symbol:VarSymbol) : IRVar {
-        return symbols.getOrPut(symbol) { IRVar(symbol.name) }
+    fun mapSymbol(symbol:VarSymbol) : IRVar = symbols.getOrPut(symbol) {
+        IRVar(symbol.name).also{vars+=it}
     }
 }
 

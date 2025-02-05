@@ -1,5 +1,8 @@
 package falcon
 
+import java.io.File
+import java.io.FileWriter
+
 fun main() {
     TODO("Command line arguments not yet implemented")
 }
@@ -8,8 +11,29 @@ enum class StopAt {
     PARSE,
     TYPE_CHECK,
     IRGEN,
-    EXECUTE_IR,
-    COMPLETE
+    OPTIMIZE,
+    ASSEMBLY,
+    EXECUTE
+}
+
+fun runAssembler(filename:String) {
+    val process = ProcessBuilder("f32asm.exe", filename)
+        .redirectError(ProcessBuilder.Redirect.INHERIT)
+        .start()
+
+    val exitCode = process.waitFor()
+    if (exitCode != 0)
+        Log.error("Assembly failed with exit code $exitCode")
+}
+
+fun runProgram() : String {
+    val process = ProcessBuilder("f32sim", "asm.hex")
+        .redirectError(ProcessBuilder.Redirect.INHERIT)
+        .start()
+    val exitCode = process.waitFor()
+    if (exitCode != 0)
+        Log.error("Execution failed with exit code $exitCode")
+    return process.inputStream.bufferedReader().readText()
 }
 
 fun compile(files:List<Lexer>, stopAt:StopAt) : String {
@@ -39,16 +63,31 @@ fun compile(files:List<Lexer>, stopAt:StopAt) : String {
     if (stopAt == StopAt.IRGEN)
         return funcs.dump()
 
-    if (stopAt == StopAt.EXECUTE_IR) {
-        val main  = funcs.find { it.name == "main" }
-        if (main == null) {
-            Log.error("No main function found")
-            return Log.getErrors()
-        }
-        Interpreter.output.clear()
-        Interpreter(main,emptyList()).execute()
-        return Interpreter.output.toString()
-    }
+    for(func in funcs)
+        Backend(func).run()
+    if (Log.hasErrors())
+        return Log.getErrors()
+    if (stopAt == StopAt.OPTIMIZE)
+        return funcs.dump()
 
-    TODO("Code generation not yet implemented")
+    val asm = StringBuilder()
+    genAssemblyHeader(asm)
+    for(func in funcs)
+        func.genAssembly(asm)
+    if (Log.hasErrors())
+        return Log.getErrors()
+    if (stopAt == StopAt.ASSEMBLY)
+        return asm.toString()
+
+    val asmFile = FileWriter("asm.f32")
+    asmFile.write(asm.toString())
+    asmFile.close()
+    runAssembler("asm.f32")
+    if (Log.hasErrors())
+        return Log.getErrors()
+
+    val output = runProgram()
+    if (Log.hasErrors())
+        return Log.getErrors()
+    return output
 }

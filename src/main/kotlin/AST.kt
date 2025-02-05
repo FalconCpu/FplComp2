@@ -148,6 +148,11 @@ sealed class AstNode (val location:Location) {
                 sb.append("New\n")
                 expr.dump(indent+1, sb)
             }
+
+            is AstTypePointer -> {
+                sb.append("TypePointer\n")
+                expr.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -183,6 +188,7 @@ class AstNew(location: Location, val expr: AstExpression) : AstExpression(locati
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)
 class AstArrayType(location: Location, val astType: AstType) : AstType(location)
+class AstTypePointer(location: Location, val expr:AstType, val nullable: Boolean) : AstType(location)
 
 // Statement classes
 class AstDeclareVar(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)

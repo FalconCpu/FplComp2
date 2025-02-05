@@ -6,9 +6,11 @@ package falcon
 // This file describes the instruction types used in the Intermediate Representation.
 
 sealed class Instr() {
+    var index = 0
     override fun toString(): String = when(this) {
+        is InstrNop -> "NOP"
         is InstrAlu -> "$op $dest, $left, $right"
-        is InstrAlui -> "$op $dest, $left, $right"
+        is InstrAlui -> "$op $dest, $left, $value"
         is InstrBranch -> "B$op $left, $right, $label"
         is InstrCall -> "CALL $func(${args.joinToString(", ")})"
         is InstrJump -> "JMP $label"
@@ -17,45 +19,116 @@ sealed class Instr() {
         is InstrLoadField -> "LD$size $dest, $addr[$offset]"
         is InstrStore -> "ST$size $data, $addr[$offset]"
         is InstrMov -> "MOV $dest, $src"
-        is InstrMovi -> "MOV $dest, $src"
+        is InstrMovi -> "MOV $dest, $value"
         is InstrRet -> "RET $retval"
-        is InstrStart -> "START ${params.joinToString(", ")}"
+        is InstrStart -> "START"
         is InstrLea -> "LEA $dest, \"$data\""
+        is InstrStoreField -> "ST$size $data, $addr[$offset]"
+    }
+
+    fun getReads() : List<IRVal> = when(this) {
+        is InstrNop -> emptyList()
+        is InstrAlu -> listOf(left, right)
+        is InstrAlui -> listOf(left)
+        is InstrBranch -> listOf(left, right)
+        is InstrCall -> args
+        is InstrJump -> emptyList()
+        is InstrLabel -> emptyList()
+        is InstrLoad -> listOf(addr)
+        is InstrLoadField -> listOf(addr)
+        is InstrStore -> listOf(data,addr)
+        is InstrMov -> listOf(src)
+        is InstrMovi -> emptyList()
+        is InstrRet -> retval
+        is InstrStart -> emptyList()
+        is InstrLea -> emptyList()
+        is InstrStoreField -> listOf(data,addr)
+    }
+
+    fun getWrites() : IRVal? = when(this) {
+        is InstrNop -> null
+        is InstrAlu -> dest
+        is InstrAlui -> dest
+        is InstrBranch -> null
+        is InstrCall -> null
+        is InstrJump -> null
+        is InstrLabel -> null
+        is InstrLoad -> dest
+        is InstrLoadField -> dest
+        is InstrStore -> null
+        is InstrMov -> dest
+        is InstrMovi -> dest
+        is InstrRet -> null
+        is InstrStart -> null
+        is InstrLea -> dest
+        is InstrStoreField -> null
     }
 }
 
+class InstrNop() : Instr()
 class InstrMov(val dest:IRVal, val src:IRVal) : Instr()
-class InstrMovi(val dest:IRVal, val src:Int) : Instr()
+class InstrMovi(val dest:IRVal, val value:Int) : Instr()
 class InstrAlu(val dest: IRVal, val op:AluOp, val left:IRVal, val right:IRVal) : Instr()
-class InstrAlui(val dest: IRVal, val op:AluOp, val left:IRVal, val right:Int) : Instr()
+class InstrAlui(val dest: IRVal, val op:AluOp, val left:IRVal, val value:Int) : Instr()
 class InstrBranch(val op:AluOp, val left:IRVal, val right:IRVal, val label: Label) : Instr()
 class InstrJump(val label:Label) : Instr()
 class InstrLabel(val label:Label) : Instr()
-    {var addr = 0}
 class InstrCall(val func: Function, val args:List<IRVal>) : Instr()
-class InstrRet(val retval:IRVal?) : Instr()
-class InstrStart(val params:List<IRVal>) : Instr()
+class InstrRet(val retval:List<IRVal>) : Instr()
+class InstrStart() : Instr()
 class InstrStore(val size:Int, val data:IRVal, val addr:IRVal, val offset: Int) : Instr()
 class InstrLoad(val size:Int, val dest:IRVal, val addr:IRVal, val offset: Int) : Instr()
 class InstrLoadField(val size:Int, val dest:IRVal, val addr:IRVal, val offset: FieldSymbol) : Instr()
+class InstrStoreField(val size:Int, val data:IRVal, val addr:IRVal, val offset: FieldSymbol) : Instr()
 class InstrLea(val dest:IRVal, val data:String) : Instr()
 
-sealed class IRVal() {
-    override fun toString() = when(this) {
-        is IRReg -> name
-        is IRVar -> name
-        is IRTemp -> name
-    }
+sealed class IRVal(val name:String) {
+    var index = 0
+    override fun toString() = name
 }
-class IRVar(val name:String) : IRVal()
-class IRReg(val name:String) : IRVal()
-class IRTemp(val name: String) : IRVal()
+class IRVar(name:String) : IRVal(name)
+class IRReg(name:String) : IRVal(name)
+class IRTemp(name: String) : IRVal(name)
 
 class Label(val name:String) {
-    var addr = 0
+    var index = 0
     override fun toString() = name
 }
 
+val machineRegs = listOf(
+    IRReg("0"),
+    IRReg("$1"),
+    IRReg("$2"),
+    IRReg("$3"),
+    IRReg("$4"),
+    IRReg("$5"),
+    IRReg("$6"),
+    IRReg("$7"),
+    IRReg("$8"),
+    IRReg("$9"),
+    IRReg("$10"),
+    IRReg("$11"),
+    IRReg("$12"),
+    IRReg("$13"),
+    IRReg("$14"),
+    IRReg("$15"),
+    IRReg("$16"),
+    IRReg("$17"),
+    IRReg("$18"),
+    IRReg("$19"),
+    IRReg("$20"),
+    IRReg("$21"),
+    IRReg("$22"),
+    IRReg("$23"),
+    IRReg("$24"),
+    IRReg("$25"),
+    IRReg("$26"),
+    IRReg("$27"),
+    IRReg("$28"),
+    IRReg("$29"),
+    IRReg("$30"),
+    IRReg("$31")
+)
 
 enum class AluOp {
     ADDI,
@@ -100,6 +173,12 @@ enum class AluOp {
     ORB,
 
     ERROR;
+
+    fun isCommutative() : Boolean = when(this) {
+        ADDI, MULI, ANDI, ORI, XORI, EQI, NEI -> true
+        ADDR, MULR, EQR, NER, GTR, GER, LTR, LER -> true
+        else -> false
+    }
 
     companion object {
         fun eval(op:AluOp, lhs:Int, rhs:Int) : Int = when(op) {

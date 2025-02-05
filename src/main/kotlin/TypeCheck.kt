@@ -30,6 +30,14 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
             val elementType = this.astType.resolveType(scope)
             ArrayType.make(elementType)
         }
+
+        is AstTypePointer -> {
+            val elementType = expr.resolveType(scope)
+            if (nullable)
+                NullablePointerType.make(elementType)
+            else
+                PointerType.make(elementType)
+        }
     }
 }
 
@@ -309,8 +317,22 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
         }
 
         is AstClass -> {
-            // TODO add support for fields
-            TastClass(location,symbolTable,constructor)
+            val ret = TastClass(location,symbolTable,constructor)
+            val oldFunction = currentFunction
+            currentFunction = constructor
+            // Add code to assign fields defined in parameter list
+            for(i in this.params.indices)
+                if (params[i].kind!=TokenKind.EOL) {
+                    val field = klass.fields.find { it.name == params[i].id.name }  ?: error("Field ${params[i].id.name} not found")
+                    val thisExpr = TastVariable(location, constructor.thisSymbol!!, constructor.thisSymbol!!.type)
+                    val lhs = TastMember(location, thisExpr, field, field.type)
+                    val rhs = TastVariable(location, constructor.parameters[i], constructor.parameters[i].type)
+                    ret.add(TastAssign(location, lhs, rhs))
+                }
+            for(stmt in statements)
+                ret.add(stmt.typeCheck(symbolTable))
+            currentFunction = oldFunction
+            ret
         }
     }
 }
@@ -338,14 +360,14 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
             val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
             val resultType = stmt.retType?.resolveType(scope) ?: UnitType
             val functionType = FunctionType.make(tcParams.map { it.type }, resultType)
-            stmt.function = Function(stmt.location, stmt.name, tcParams, resultType)
+            stmt.function = Function(stmt.location, stmt.name, tcParams, resultType, null)
             val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
             tcParams.forEach{ stmt.symbolTable.add(it) }
             scope.add(sym)
 
         } else if (stmt is AstClass) {
             val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
-            stmt.constructor = Function(stmt.location, stmt.name, tcParams, UnitType)
+            stmt.constructor = Function(stmt.location, stmt.name, tcParams, UnitType, stmt.klass)
             stmt.klass.constructor = stmt.constructor
             for(i in tcParams.indices) {
                 if (stmt.params[i].kind== TokenKind.EOL)

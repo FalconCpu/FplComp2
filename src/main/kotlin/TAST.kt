@@ -174,6 +174,11 @@ sealed class TastExpression(location: Location, val type: Type) : Tast(location)
 
             is  TastIndex -> {}
 
+            is TastMember -> {
+                if (!member.mutable)
+                    Log.error(location, "Member '$member' is not mutable")
+            }
+
             else -> Log.error(location, "Expression is not an lvalue")
         }
     }
@@ -223,7 +228,7 @@ sealed class TastBlock(location: Location, val symbolTable: SymbolTable) : TastS
 }
 
 class TastTopLevel(location: Location, symbolTable: SymbolTable) : TastBlock(location, symbolTable) {
-    val function = Function(Location.nullLocation, "<TopLevel>", emptyList(), UnitType)
+    val function = Function(Location.nullLocation, "<TopLevel>", emptyList(), UnitType, null)
     fun dump(): String {
         val sb = StringBuilder()
         dump(0, sb)

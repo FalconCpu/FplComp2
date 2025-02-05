@@ -223,11 +223,17 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseType() : AstType {
-        return when(lookahead.kind) {
+        var ret = when(lookahead.kind) {
             ARRAY -> parseArrayType()
             IDENTIFIER -> parseTypeIdentifier()
             else -> throw ParseError(lookahead.location, "Got '${lookahead.kind}' when expecting type")
         }
+
+        while(lookahead.kind==STAR || lookahead.kind==QUESTION) {
+            val tok = nextToken()
+            ret = AstTypePointer(tok.location, ret, tok.kind==QUESTION)
+        }
+        return ret
     }
 
     private fun parseOptType() : AstType? {

@@ -96,6 +96,11 @@ fun TastExpression.codeGenLvalue(value: IRVal) {
             currentFunc.addStore(type.getSize(), value, addr, 0 )
         }
 
+        is TastMember -> {
+            val expr = expr.codeGen()
+            currentFunc.addStoreField(type.getSize(), value, expr, member)
+        }
+
         else -> throw ParseError(location, "Not an lvalue in codeGen")
     }
 }
@@ -206,13 +211,37 @@ fun TastStatement.codeGen() {
 
 fun TastFunction.codeGen() {
     currentFunc = function
-    currentFunc.add( InstrStart(function.parameters.map{currentFunc.mapSymbol(it)}) )
+    currentFunc.add( InstrStart())
+    var regIndex = 1
+    if (function.thisSymbol!=null)
+        currentFunc.addMov(function.mapSymbol(function.thisSymbol), machineRegs[regIndex++])
+    for(param in function.parameters)
+        currentFunc.addMov(function.mapSymbol(param), machineRegs[regIndex++])
     for(statement in statements)
         statement.codeGen()
     currentFunc.addLabel( currentFunc.retLabel)
-    currentFunc.add( InstrRet(currentFunc.retVal) )
+    val retval = if (currentFunc.retVal==null) emptyList() else listOf(currentFunc.retVal!!)
+    currentFunc.add( InstrRet(retval) )
 }
 
+// ---------------------------------------------------------------------------
+//                            Class
+// ---------------------------------------------------------------------------
+
+fun TastClass.codeGen() {
+    currentFunc = constructor
+    currentFunc.add( InstrStart())
+    var regIndex = 1
+    check(constructor.thisSymbol!=null)
+    currentFunc.addMov(constructor.mapSymbol(constructor.thisSymbol), machineRegs[regIndex++])
+    for(param in constructor.parameters)
+        currentFunc.addMov(constructor.mapSymbol(param), machineRegs[regIndex++])
+    for(statement in statements)
+        statement.codeGen()
+    currentFunc.addLabel( currentFunc.retLabel)
+    val retval = if (currentFunc.retVal==null) emptyList() else listOf(currentFunc.retVal!!)
+    currentFunc.add( InstrRet(retval) )
+}
 
 // ---------------------------------------------------------------------------
 //                            Top level
@@ -221,11 +250,13 @@ fun TastFunction.codeGen() {
 fun TastTopLevel.codeGen() : List<Function>{
     println("Generating code for ${function.name}")
     currentFunc = function
-    currentFunc.add( InstrStart(emptyList()) )
-    for (statement in statements.filterNot { it is TastFunction })
+    currentFunc.add( InstrStart() )
+    for (statement in statements.filterNot { it is TastFunction || it is TastClass })
         statement.codeGen()
-    currentFunc.add( InstrRet(null) )
+    currentFunc.add( InstrRet(emptyList()) )
 
+    for (statement in statements.filterIsInstance<TastClass>())
+        statement.codeGen()
     for (statement in statements.filterIsInstance<TastFunction>())
         statement.codeGen()
     return allFunctions
