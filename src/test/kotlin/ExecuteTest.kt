@@ -21,7 +21,7 @@ class ExecuteTest {
                 var uartTx : Int
             
             fun printString(string:String)
-                val hwregs = (0xE0000000:HwRegs*)
+                val hwregs = (0xE0000000:HwRegs)
                 for i in 0 to< string.length
                     hwregs.uartTx = (string[i] : Int)
             
@@ -53,7 +53,7 @@ class ExecuteTest {
                 return total
                 
             fun main()
-                val hwregs = (0xE0000000:HwRegs*)
+                val hwregs = (0xE0000000:HwRegs)
                 val tot = foo(1,2,3,4)
                 hwregs.sevenSeg = tot
         """.trimIndent()

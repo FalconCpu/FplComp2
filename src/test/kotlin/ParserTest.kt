@@ -312,7 +312,7 @@ class ParserTest {
                   Identifier x
                   IntLit 0
                 While
-                  Binop LT
+                  Compare LT
                     Identifier x
                     Identifier a
                   Assign

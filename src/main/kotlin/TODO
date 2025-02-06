@@ -3,18 +3,20 @@ Done:
    peephole optimization
    register allocation
    asm code generation
+   varargs
 
 
 ShortTerm:
+   constructor calls
    when statement
    repeat until
    string comparison
+   null values
    stdlib: printInt etc
    stdlib: malloc
 
 Medium Term:
    path dependant types
-   varargs
 
 Longer Term:
    inheritance

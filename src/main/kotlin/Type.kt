@@ -24,16 +24,17 @@ sealed class Type(private val name:String) {
         UndefinedType -> 0
         StringType -> 4
         UnitType -> 0
+        NullType -> 4
         is ArrayType -> 4
         is FunctionType -> 4
-        is PointerType -> 4
-        is NullablePointerType -> 4
-        is ClassType -> classSize
+        is NullableType -> 4
+        is ClassType -> 4
     }
 
 }
 
 object UnitType      : Type("Unit")
+object NullType      : Type("Null")
 object BoolType      : Type("Bool")
 object CharType      : Type("Char")
 object IntType       : Type("Int")
@@ -96,28 +97,13 @@ class  ClassType(name:String) : Type(name) {
 //                       Pointer Types
 // ----------------------------------------------------------------------------
 
-class  PointerType(val elementType: Type) : Type("$elementType*") {
+class  NullableType(val elementType: Type) : Type("$elementType?") {
     companion object {
-        private val allPointerTypes = mutableMapOf<Type, PointerType>()
+        private val allPointerTypes = mutableMapOf<Type, NullableType>()
         fun make(elementType: Type): Type {
             if (elementType== ErrorType)
                 return ErrorType
-            return allPointerTypes.getOrPut(elementType) { PointerType(elementType) }
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
-//                       Pointer Types
-// ----------------------------------------------------------------------------
-
-class  NullablePointerType(val elementType: Type) : Type("$elementType?") {
-    companion object {
-        private val allPointerTypes = mutableMapOf<Type, NullablePointerType>()
-        fun make(elementType: Type): Type {
-            if (elementType== ErrorType)
-                return ErrorType
-            return allPointerTypes.getOrPut(elementType) { NullablePointerType(elementType) }
+            return allPointerTypes.getOrPut(elementType) { NullableType(elementType) }
         }
     }
 }

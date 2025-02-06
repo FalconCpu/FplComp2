@@ -149,14 +149,14 @@ sealed class Tast(val location: Location) {
                 expr.dump(indent + 1, sb)
             }
 
-            is TastNew -> {
-                sb.append("New ($type)\n")
-                expr.dump(indent + 1, sb)
-            }
-
             is TastDeclareField -> {
                 sb.append("DeclareField $symbol\n")
                 expr?.dump(indent + 1, sb)
+            }
+
+            is TastNewArray -> {
+                sb.append("NewArray ($type)\n")
+                size.dump(indent + 1, sb)
             }
         }
     }
@@ -169,26 +169,9 @@ sealed class TastExpression(location: Location, val type: Type) : Tast(location)
         if (!expectedType.isAssignableFrom(this.type))
             Log.error(location, "Type mismatch: expected $expectedType but got $type")
     }
-
-    fun checkIsLValue() {
-        when(this) {
-            is TastVariable ->
-                if (!symbol.mutable)
-                    Log.error(location, "Variable '$symbol' is not mutable")
-
-            is  TastIndex -> {}
-
-            is TastMember -> {
-                if (!member.mutable)
-                    Log.error(location, "Member '$member' is not mutable")
-            }
-
-            else -> Log.error(location, "Expression is not an lvalue")
-        }
-    }
 }
 
-class TastIntLiteral(location: Location, val value: Int) : TastExpression(location, IntType)
+class TastIntLiteral(location: Location, val value: Int, type:Type) : TastExpression(location, type)
 class TastRealLiteral(location: Location, val value: Double) : TastExpression(location, RealType)
 class TastStringLiteral(location: Location, val value: String) : TastExpression(location, StringType)
 class TastCharLiteral(location: Location, val value: Char) : TastExpression(location, CharType)
@@ -205,7 +188,7 @@ class TastMember(location: Location, val expr: TastExpression, val member: Field
 class TastTypeDescriptor(location: Location, type:Type) : TastExpression(location,type)
 class TastConstructor(location: Location, val args:List<TastExpression>, type:Type) : TastExpression(location,type)
 class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
-class TastNew(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
+class TastNewArray(location: Location, val size:TastExpression, type:Type) : TastExpression(location, type)
 
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {

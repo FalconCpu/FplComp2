@@ -197,6 +197,25 @@ class Peephole(private val func: Function) {
                     return replaceWith( InstrAlui(dest, op, right, left.getConstantValue()))
             }
 
+            is InstrAlui -> {
+                // remove instructions when the result is never used
+                if (dest.isNeverUsed())
+                    return changeToNop(this)
+
+                // perform some arithmetic simplifications
+                if (value==0 && op in listOf(ADDI, SUBI, ORI, XORI, LSLI, LSRI, ASRI))
+                    return replaceWith( InstrMov(dest, left))
+                if (value==1 && op in listOf(MULI,DIVI))
+                    return replaceWith( InstrMov(dest, left))
+                if (value.isPowerOf2() && op==MULI)
+                    return replaceWith(InstrAlui(dest, LSLI, left, log2(value)))
+                if (value.isPowerOf2() && op==DIVI)
+                    return replaceWith(InstrAlui(dest, ASRI, left, log2(value)))
+                if (value.isPowerOf2() && value in 0..0xfff && op==MODI)
+                    return replaceWith(InstrAlui(dest, ANDI, left, value-1))
+            }
+
+
             is InstrJump -> {
                 // Look for jumps to next instruction
                 if (label.index==index+1)

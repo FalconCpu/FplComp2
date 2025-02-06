@@ -4,6 +4,7 @@ sealed class Symbol(val location: Location, val name:String, val type: Type) {
     override fun toString(): String = name
 }
 
+class ConstantSymbol(location: Location, name: String, type: Type, val value: Int) : Symbol(location, name, type)
 class VarSymbol(location: Location, name: String, type: Type, val mutable:Boolean) : Symbol(location, name, type)
 class FunctionSymbol(location: Location, name: String, type: FunctionType, val function: Function) : Symbol(location, name, type)
 class TypeSymbol(location: Location, name: String, type: Type) : Symbol(location, name, type)
@@ -51,5 +52,8 @@ private fun definePredefinedSymbols(): SymbolTable {
     symbolTable.add(TypeSymbol(Location.nullLocation, "Char", CharType))
     symbolTable.add(TypeSymbol(Location.nullLocation, "Bool", BoolType))
     symbolTable.add(TypeSymbol(Location.nullLocation, "Unit", UnitType))
+    symbolTable.add(ConstantSymbol(Location.nullLocation, "true", BoolType, 1))
+    symbolTable.add(ConstantSymbol(Location.nullLocation, "false", BoolType, 0))
+    symbolTable.add(ConstantSymbol(Location.nullLocation, "null", NullType, 0))
     return symbolTable
 }

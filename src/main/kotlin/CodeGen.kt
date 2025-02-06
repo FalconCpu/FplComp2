@@ -63,7 +63,7 @@ fun TastExpression.codeGen() : IRVal {
         is TastTypeDescriptor -> TODO()
         is TastConstructor -> TODO()
         is TastNeg -> TODO()
-        is TastNew -> TODO()
+        is TastNewArray -> TODO()
     }
 }
 
@@ -121,7 +121,7 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
 
         is TastAndOp -> TODO()
         is TastOrOp -> TODO()
-        else -> TODO()
+        else -> TODO("codeGenBool ${this.javaClass}")
     }
 }
 

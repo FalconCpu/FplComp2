@@ -43,15 +43,17 @@ class ParseExpressionTest {
     fun expression3() {
         val expression = "a=b and c<d or c!=d"
         val expected = """
-            Binop OR
-              Binop AND
-                Binop EQ
+            Or
+              And
+                Equals EQ
                   Identifier a
                   Identifier b
-                Binop LT
+                Compare LT
                   Identifier c
                   Identifier d
-              Identifier c
+              Equals NE
+                Identifier c
+                Identifier d
             
         """.trimIndent()
         runTest(expression, expected)
@@ -118,7 +120,7 @@ class ParseExpressionTest {
         val expression = "not(a=b)"
         val expected = """
             UnaryOp MINUS
-              Binop EQ
+              Equals EQ
                 Identifier a
                 Identifier b
 

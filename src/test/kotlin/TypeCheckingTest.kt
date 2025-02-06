@@ -77,7 +77,7 @@ class TypeCheckingTest {
                   Variable a Int
                   IntLit 1 Int
               Declare c Bool
-                Compare LTI Bool
+                Binop LTI Bool
                   Variable a Int
                   Variable b Int
               Declare d Real
@@ -382,7 +382,7 @@ class TypeCheckingTest {
             class Cat(val name:String, val age:Int)
             
             fun main()
-                val cat = Cat("Fluffy", 3)
+                val cat = new Cat("Fluffy", 3)
                 val a = cat.age
         """.trimIndent()
 
@@ -421,7 +421,7 @@ class TypeCheckingTest {
         """.trimIndent()
 
         val expected = """
-            input.fpl:5.16: Not a class
+            input.fpl:5.16: Got type 'Int' when expecting class
         """.trimIndent()
         runTest(input, expected)
     }
@@ -450,41 +450,6 @@ class TypeCheckingTest {
 
         val expected = """
             input.fpl:3.13: Type 'f' is a variable not a type
-        """.trimIndent()
-        runTest(input, expected)
-    }
-
-    @Test
-    fun newClassTest() {
-        val input = """
-            class Cat(val name:String, val age:Int)
-            
-            fun main()
-                val cat = new Cat("fluffy",5)
-                val a = cat.age
-        """.trimIndent()
-
-        val expected = """
-            TopLevel
-              Class Cat
-                Assign
-                  Member name (String)
-                    Variable this Cat
-                  Variable name String
-                Assign
-                  Member age (Int)
-                    Variable this Cat
-                  Variable age Int
-              Function main
-                Declare cat Cat*
-                  New (Cat*)
-                    Constructor (Cat)
-                      StringLit "fluffy" String
-                      IntLit 5 Int
-                Declare a Int
-                  Member age (Int)
-                    Variable cat Cat*
-
         """.trimIndent()
         runTest(input, expected)
     }
@@ -554,6 +519,4 @@ class TypeCheckingTest {
         """.trimIndent()
         runTest(input, expected)
     }
-
-
 }

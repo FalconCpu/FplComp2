@@ -1,5 +1,6 @@
 package falcon
 import falcon.TokenKind.*
+import kotlin.math.exp
 
 class ParseError(location: Location, message: String) : Exception("$location: $message")
 
@@ -139,13 +140,36 @@ class Parser(private val lexer: Lexer) {
             }
     }
 
+    private fun parseNew() : AstExpression {
+        val location = lookahead.location
+        if (canTake(ARRAY)) {
+            expect(LT)
+            val type = parseType()
+            expect(GT)
+            expect(OPENB)
+            val size = parseExpression()
+            expect(CLOSEB)
+            return AstNewArray(location, type, size)
+        } else {
+            val type = parseTypeIdentifier()
+            expect(OPENB)
+            val args = mutableListOf<AstExpression>()
+            if (lookahead.kind!=CLOSEB)
+                do {
+                    args.add(parseExpression())
+                } while (canTake(COMMA))
+            expect(CLOSEB)
+            return AstConstructor(location, type, args)
+        }
+    }
+
     private fun parsePrefix() : AstExpression {
         if (canTake(MINUS) )
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NOT))
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NEW))
-            return AstNew(lookahead.location, parsePrefix())
+            return parseNew()
         return parsePostfix()
     }
 
@@ -179,7 +203,10 @@ class Parser(private val lexer: Lexer) {
                lookahead.kind == EQ || lookahead.kind == NE) {
             val op = nextToken()
             val right = parseAdd()
-            left = AstBinaryOp(op.location, op.kind, left, right)
+            left = if (op.kind==EQ || op.kind==NE)
+                AstEqualsOp(op.location, op.kind, left, right)
+            else
+                AstCompareOp(op.location, op.kind, left, right)
         }
         return left
     }
@@ -189,7 +216,7 @@ class Parser(private val lexer: Lexer) {
         while (lookahead.kind == AND) {
             val op = nextToken()
             val right = parseComp()
-            left = AstBinaryOp(op.location, op.kind, left, right)
+            left = AstAndOp(op.location, left, right)
         }
         return left
     }
@@ -199,7 +226,7 @@ class Parser(private val lexer: Lexer) {
         while (lookahead.kind == OR) {
             val op = nextToken()
             val right = parseAnd()
-            left = AstBinaryOp(op.location, op.kind, left, right)
+            left = AstOrOp(op.location, left, right)
         }
         return left
     }
@@ -229,14 +256,9 @@ class Parser(private val lexer: Lexer) {
             else -> throw ParseError(lookahead.location, "Got '${lookahead.kind}' when expecting type")
         }
 
-        while(true) {
-            ret = when(lookahead.kind) {
-                STAR -> AstTypePointer(lookahead.location, ret, false)
-                QUESTION -> AstTypePointer(lookahead.location, ret, true)
-                else -> return ret
-            }
-            nextToken()
-        }
+        if (canTake(QUESTION))
+            ret = AstTypeNullable(lookahead.location, ret, true)
+        return ret
     }
 
     private fun parseOptType() : AstType? {

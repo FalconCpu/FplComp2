@@ -25,6 +25,30 @@ sealed class AstNode (val location:Location) {
                 right.dump(indent+1, sb)
             }
 
+            is AstCompareOp -> {
+                sb.append("Compare $op\n")
+                left.dump(indent+1, sb)
+                right.dump(indent+1, sb)
+            }
+
+            is AstEqualsOp -> {
+                sb.append("Equals $op\n")
+                left.dump(indent+1, sb)
+                right.dump(indent+1, sb)
+            }
+
+            is AstAndOp -> {
+                sb.append("And\n")
+                left.dump(indent+1, sb)
+                right.dump(indent+1, sb)
+            }
+
+            is AstOrOp -> {
+                sb.append("Or\n")
+                left.dump(indent+1, sb)
+                right.dump(indent+1, sb)
+            }
+
             is AstDeclareVar -> {
                 sb.append("Declare $decl\n")
                 id.dump(indent+1, sb)
@@ -149,12 +173,7 @@ sealed class AstNode (val location:Location) {
                     stmt.dump(indent+1, sb)
             }
 
-            is AstNew -> {
-                sb.append("New\n")
-                expr.dump(indent+1, sb)
-            }
-
-            is AstTypePointer -> {
+            is AstTypeNullable -> {
                 sb.append("TypePointer\n")
                 expr.dump(indent+1, sb)
             }
@@ -163,6 +182,18 @@ sealed class AstNode (val location:Location) {
                 sb.append("ParameterList\n")
                 for(param in parameters)
                     param.dump(indent+1, sb)
+            }
+
+            is AstConstructor -> {
+                sb.append("Constructor\n")
+                astType.dump(indent+1, sb)
+                args.forEach { it.dump(indent+1, sb) }
+            }
+
+            is AstNewArray -> {
+                sb.append("New Array\n")
+                elType.dump(indent+1, sb)
+                size.dump(indent+1, sb)
             }
         }
     }
@@ -188,18 +219,23 @@ class AstStringLiteral(location: Location, val value: String) : AstExpression(lo
 class AstCharLiteral(location: Location, val value: String) : AstExpression(location)
 class AstIdentifier(location: Location, val name: String) : AstExpression(location)
 class AstBinaryOp(location: Location, val op: TokenKind, val left: AstExpression, val right: AstExpression) : AstExpression(location)
+class AstEqualsOp(location: Location, val op: TokenKind, val left: AstExpression, val right: AstExpression) : AstExpression(location)
+class AstCompareOp(location: Location, val op: TokenKind, val left: AstExpression, val right: AstExpression) : AstExpression(location)
+class AstAndOp(location: Location, val left: AstExpression, val right: AstExpression) : AstExpression(location)
+class AstOrOp(location: Location, val left: AstExpression, val right: AstExpression) : AstExpression(location)
 class AstIndex(location: Location, val expr: AstExpression, val index: AstExpression) : AstExpression(location)
 class AstMember(location: Location, val expr: AstExpression, val name: String) : AstExpression(location)
 class AstUnaryOp(location: Location, val op: TokenKind, val expr: AstExpression) : AstExpression(location)
 class AstCast(location: Location, val expr: AstExpression, val type: AstType) : AstExpression(location)
 class AstFunctionCall(location: Location, val expr: AstExpression, val args: List<AstExpression>) : AstExpression(location)
-class AstNew(location: Location, val expr: AstExpression) : AstExpression(location)
+class AstNewArray(location: Location, val elType: AstType, val size: AstExpression) : AstExpression(location)
+class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>) : AstExpression(location)
 
 
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)
 class AstArrayType(location: Location, val astType: AstType) : AstType(location)
-class AstTypePointer(location: Location, val expr:AstType, val nullable: Boolean) : AstType(location)
+class AstTypeNullable(location: Location, val expr:AstType, val nullable: Boolean) : AstType(location)
 
 // Statement classes
 class AstDeclareVar(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)
@@ -238,7 +274,9 @@ class AstClass(location: Location, val name:String, val params: AstParameterList
 class AstWhile(location: Location, val expr: AstExpression, parent:AstBlock) : AstBlock(location, parent)
 class AstForRange(location: Location, val id: AstIdentifier, val from: AstExpression, val to: AstExpression, val comparator: TokenKind, parent:AstBlock)
     : AstBlock(location, parent)
-class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock) : AstBlock(location, parent)
+class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock) : AstBlock(location, parent) {
+    lateinit var pathContextOut : PathContext
+}
 
 // Miscellaneous classes
 class AstParameter(location: Location, val kind:TokenKind, val id: AstIdentifier, val type: AstType) : AstNode(location)
