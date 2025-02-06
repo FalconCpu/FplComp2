@@ -229,11 +229,14 @@ class Parser(private val lexer: Lexer) {
             else -> throw ParseError(lookahead.location, "Got '${lookahead.kind}' when expecting type")
         }
 
-        while(lookahead.kind==STAR || lookahead.kind==QUESTION) {
-            val tok = nextToken()
-            ret = AstTypePointer(tok.location, ret, tok.kind==QUESTION)
+        while(true) {
+            ret = when(lookahead.kind) {
+                STAR -> AstTypePointer(lookahead.location, ret, false)
+                QUESTION -> AstTypePointer(lookahead.location, ret, true)
+                else -> return ret
+            }
+            nextToken()
         }
-        return ret
     }
 
     private fun parseOptType() : AstType? {
@@ -291,16 +294,17 @@ class Parser(private val lexer: Lexer) {
         return AstParameter(id.location, EOL, id, type)
     }
 
-    private fun parseParameterList() : List<AstParameter> {
+    private fun parseParameterList() : AstParameterList {
         val params = mutableListOf<AstParameter>()
         expect(OPENB)
         if (canTake(CLOSEB))
-            return params
+            return AstParameterList(params,false)
         do {
             params.add(parseParameter())
         } while (canTake(COMMA))
+        val isVariadic = canTake(DOTDOTDOT)
         expect(CLOSEB)
-        return params
+        return AstParameterList(params,isVariadic)
     }
 
     private fun parseFunction(block: AstBlock) {
@@ -435,17 +439,18 @@ class Parser(private val lexer: Lexer) {
         return AstParameter(id.location, kind, id, type)
     }
 
-    private fun parseClassParameterList() : List<AstParameter> {
+    private fun parseClassParameterList() : AstParameterList {
         val ret = mutableListOf<AstParameter>()
         if (lookahead.kind!=OPENB)
-            return ret
+            return AstParameterList(ret,false)
         expect(OPENB)
         if (lookahead.kind!=CLOSEB)
             do {
                 ret.add(parseClassParameter())
             } while (canTake(COMMA))
+        val isVariadic = canTake(DOTDOTDOT)
         expect(CLOSEB)
-        return ret
+        return AstParameterList(ret, isVariadic)
     }
 
     private fun parseClassBody(block:AstBlock) {
@@ -504,7 +509,6 @@ class Parser(private val lexer: Lexer) {
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
         }
     }
-
 
     private fun parseTopStatement(block:AstBlock) {
         when (lookahead.kind) {

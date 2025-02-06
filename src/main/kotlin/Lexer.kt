@@ -93,10 +93,17 @@ class Lexer(private val fileName: String, private val fileHandle: Reader) {
 
     private fun readPunctuation() : String {
         val c = nextChar()
+        if (c=='.' && lookahead=='.') {
+            nextChar()
+            if (lookahead=='.') {
+                nextChar()
+                return "..."
+            } else
+                return ".."
+        }
         if ((c=='<' && lookahead=='=') ||
             (c=='>' && lookahead=='=') ||
-            (c=='-' && lookahead=='>') ||
-            (c=='.' && lookahead=='.'))
+            (c=='-' && lookahead=='>'))
             return c.toString() + nextChar()
         return c.toString()
     }
@@ -172,6 +179,7 @@ class Lexer(private val fileName: String, private val fileHandle: Reader) {
 
         lineContinues = kind.lineContinues
         atStartOfLine = (kind==TokenKind.EOL) || (kind==TokenKind.DEDENT)
+        //println("$kind:$text")
         return Token(location, kind, text)
     }
 

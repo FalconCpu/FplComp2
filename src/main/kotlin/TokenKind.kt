@@ -26,6 +26,8 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     NE("!=", true),
     COMMA(",", true),
     DOT(".", true),
+    DOTDOT("..", true),
+    DOTDOTDOT("...", true),
     COLON(":", true),
     ARROW("->", true),
     QUESTION("?", true),

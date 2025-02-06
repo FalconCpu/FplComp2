@@ -128,7 +128,8 @@ class IRGenTest {
             Function main:
             START
             LEA #0, "Hello, world!"
-            CALL printString(#0)
+            MOV $1, #0
+            CALL printString($1)
             @0:
             RET []
 

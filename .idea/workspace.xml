@@ -4,16 +4,29 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Generate assembly and execute">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Fields in classes can now have initializers">
+      <change afterPath="$PROJECT_DIR$/src/stdlib/print.fpl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/AST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/AST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Function.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Function.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Lexer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Lexer.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Main.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Main.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/RegisterAllocator.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/RegisterAllocator.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TODO" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Type.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Type.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/kotlin/ExecuteTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/ExecuteTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/IRGenTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/IRGenTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/ParserTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/ParserTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,18 +74,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "FalconCpu"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;FalconCpu&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/FalconCpu/FplComp2.git",
-    "accountId": "4e22533f-46c0-4209-b904-3a791c80a6bf"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/FalconCpu/FplComp2.git&quot;,
+    &quot;accountId&quot;: &quot;4e22533f-46c0-4209-b904-3a791c80a6bf&quot;
   }
-}]]></component>
+}</component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -90,10 +103,13 @@
     "Downloaded.Files.Path.Enabled": "false",
     "Gradle.Build fpl.executor": "Run",
     "Gradle.ExecuteTest.outputChar.executor": "Run",
+    "Gradle.ExecuteTest.variadicArgs.executor": "Run",
     "Gradle.InterpreterTest.helloWorld.executor": "Run",
     "Gradle.LexerTest.executor": "Coverage",
     "Gradle.LexerTest.lexerTest.executor": "Run",
+    "Gradle.StdLibTest.outputChar.executor": "Run",
     "Gradle.Tests in 'fpl.test'.executor": "Run",
+    "Gradle.TypeCheckingTest.variadicArgs.executor": "Run",
     "Repository.Attach.Annotations": "false",
     "Repository.Attach.JavaDocs": "false",
     "Repository.Attach.Sources": "false",
@@ -117,7 +133,7 @@
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/simon/IdeaProjects/fpl",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+    "settings.editor.selected.configurable": "preferences.fileTypes"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -128,7 +144,7 @@
       <recent name="" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.ExecuteTest.outputChar">
+  <component name="RunManager" selected="Gradle.Tests in 'fpl.test'">
     <configuration name="ExecuteTest.outputChar" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -153,7 +169,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="InterpreterTest.helloWorld" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="ExecuteTest.variadicArgs" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -166,7 +182,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.InterpreterTest.helloWorld&quot;" />
+            <option value="&quot;falcon.ExecuteTest.variadicArgs&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -177,7 +193,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="LexerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="StdLibTest.outputChar" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -190,31 +206,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.LexerTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="LexerTest.lexerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;falcon.LexerTest.lexerTest&quot;" />
+            <option value="&quot;falcon.StdLibTest.outputChar&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -247,20 +239,44 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
+    <configuration name="TypeCheckingTest.variadicArgs" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;falcon.TypeCheckingTest.variadicArgs&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
     <list>
+      <item itemvalue="Gradle.ExecuteTest.variadicArgs" />
+      <item itemvalue="Gradle.StdLibTest.outputChar" />
+      <item itemvalue="Gradle.TypeCheckingTest.variadicArgs" />
       <item itemvalue="Gradle.ExecuteTest.outputChar" />
-      <item itemvalue="Gradle.InterpreterTest.helloWorld" />
-      <item itemvalue="Gradle.LexerTest" />
-      <item itemvalue="Gradle.LexerTest.lexerTest" />
       <item itemvalue="Gradle.Tests in 'fpl.test'" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.ExecuteTest.outputChar" />
         <item itemvalue="Gradle.Tests in 'fpl.test'" />
-        <item itemvalue="Gradle.InterpreterTest.helloWorld" />
-        <item itemvalue="Gradle.LexerTest" />
-        <item itemvalue="Gradle.LexerTest.lexerTest" />
+        <item itemvalue="Gradle.ExecuteTest.variadicArgs" />
+        <item itemvalue="Gradle.TypeCheckingTest.variadicArgs" />
+        <item itemvalue="Gradle.StdLibTest.outputChar" />
+        <item itemvalue="Gradle.ExecuteTest.outputChar" />
       </list>
     </recent_temporary>
   </component>
@@ -297,14 +313,23 @@
       <option name="project" value="LOCAL" />
       <updated>1738721646742</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Fields in classes can now have initializers">
+      <option name="closed" value="true" />
+      <created>1738725701162</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1738725701162</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Basic functions of compiler now working" />
     <MESSAGE value="Basic classes implemented" />
     <MESSAGE value="Generate assembly and execute" />
-    <option name="LAST_COMMIT_MESSAGE" value="Generate assembly and execute" />
+    <MESSAGE value="Fields in classes can now have initializers" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fields in classes can now have initializers" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fpl$LexerTest.ic" NAME="LexerTest Coverage Results" MODIFIED="1736365430595" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />

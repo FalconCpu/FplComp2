@@ -100,12 +100,13 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
-                Parameter
-                  Identifier a
-                  TypeIdentifier Int
-                Parameter
-                  Identifier b
-                  TypeIdentifier String
+                ParameterList
+                  Parameter
+                    Identifier a
+                    TypeIdentifier Int
+                  Parameter
+                    Identifier b
+                    TypeIdentifier String
                 TypeIdentifier Int
                 Declare VAL
                   Identifier c
@@ -127,12 +128,13 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
-                Parameter
-                  Identifier a
-                  TypeIdentifier Int
-                Parameter
-                  Identifier b
-                  TypeIdentifier String
+                ParameterList
+                  Parameter
+                    Identifier a
+                    TypeIdentifier Int
+                  Parameter
+                    Identifier b
+                    TypeIdentifier String
                 TypeIdentifier Int
                 Declare VAL
                   Identifier c
@@ -154,6 +156,7 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
+                ParameterList
                 TypeIdentifier Int
                 Declare VAR
                   Identifier c
@@ -272,9 +275,10 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
-                Parameter
-                  Identifier a
-                  TypeIdentifier Int
+                ParameterList
+                  Parameter
+                    Identifier a
+                    TypeIdentifier Int
                 TypeIdentifier Int
                 Return
                   Binop PLUS
@@ -299,9 +303,10 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
-                Parameter
-                  Identifier a
-                  TypeIdentifier Int
+                ParameterList
+                  Parameter
+                    Identifier a
+                    TypeIdentifier Int
                 TypeIdentifier Int
                 Declare VAR
                   Identifier x
@@ -334,6 +339,7 @@ class ParserTest {
         val expected = """
             TopLevel
               Function foo
+                ParameterList
                 Declare VAR
                   Identifier a
                   IntLit 18

@@ -164,10 +164,10 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
             val args = args.map { it.typeCheckRvalue(scope) }
 
             if (expr.type is FunctionType) {
-                typeCheckArgList(location, args, expr.type.parameterTypes)
+                typeCheckArgList(location, args, expr.type.parameterTypes, expr.type.isVariadic)
                 TastFunctionCall(location, expr, args, expr.type.returnType)
             } else if (expr is TastTypeDescriptor && expr.type is ClassType) {
-                typeCheckArgList(location, args, expr.type.constructor.parameters.map{it.type} )
+                typeCheckArgList(location, args, expr.type.constructor.parameters.map{it.type}, false)
                 TastConstructor(location, args, expr.type)
             } else {
                 TastError(location,"Call on non-function type ${expr.type}")
@@ -176,7 +176,7 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
 
         is AstMember -> {
             val expr = expr.typeCheckRvalue(scope)
-            if (expr.type is StringType && name == "length")
+            if ((expr.type is StringType || expr.type is ArrayType) && name == "length")
                 TastMember(location, expr, lengthSymbol, IntType)
             else if (expr.type is ClassType) {
                 val sym = expr.type.fields.find { it.name == name } ?:
@@ -218,14 +218,27 @@ private fun AstExpression.typeCheckRvalue(scope:SymbolTable) : TastExpression {
 //                        ArgList
 // ----------------------------------------------------------------------------
 
-private fun typeCheckArgList(location:Location, args:List<TastExpression>, parameters:List<Type>) {
-    if (args.size != parameters.size)
-        Log.error(location, "Expected ${parameters.size} arguments, got ${args.size}")
-    else {
-        for (i in args.indices)
-            parameters[i].checkType(args[i])
-    }
+private fun typeCheckArgList(location:Location, args:List<TastExpression>, parameters:List<Type>, isVariadic:Boolean) {
+    if (isVariadic) {
+        val numNonVariadicArgs = parameters.size - 1
+        val variadicType = (parameters.last() as ArrayType).elementType
+        if (args.size < numNonVariadicArgs)
+            Log.error(location, "Expected at least $numNonVariadicArgs arguments, got ${args.size}")
+        else {
+            for (i in 0 until numNonVariadicArgs)
+                args[i].checkType(parameters[i])
+            for (i in numNonVariadicArgs until args.size)
+                args[i].checkType(variadicType)
+        }
 
+    } else {
+        if (args.size != parameters.size)
+            Log.error(location, "Expected ${parameters.size} arguments, got ${args.size}")
+        else {
+            for (i in args.indices)
+                parameters[i].checkType(args[i])
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -325,12 +338,12 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val oldFunction = currentFunction
             currentFunction = constructor
             // Add code to assign fields defined in parameter list
-            for(i in this.params.indices)
-                if (params[i].kind!=TokenKind.EOL) {
-                    val field = klass.fields.find { it.name == params[i].id.name }  ?: error("Field ${params[i].id.name} not found")
+            for((index,param) in params.parameters.withIndex())
+                if (param.kind!=TokenKind.EOL) {
+                    val field = klass.fields.find { it.name == param.id.name }  ?: error("Field ${param.id.name} not found")
                     val thisExpr = TastVariable(location, constructor.thisSymbol!!, constructor.thisSymbol!!.type)
                     val lhs = TastMember(location, thisExpr, field, field.type)
-                    val rhs = TastVariable(location, constructor.parameters[i], constructor.parameters[i].type)
+                    val rhs = TastVariable(location, constructor.parameters[index], constructor.parameters[index].type)
                     ret.add(TastAssign(location, lhs, rhs))
                 }
             for(stmt in statements)
@@ -345,13 +358,19 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
 //                          generate Symbols
 // ----------------------------------------------------------------------------
 
-private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol{
+private fun AstParameter.generateSymbol(scope: SymbolTable, asArray:Boolean) : VarSymbol{
     val tcType = type.resolveType(scope)
-    return VarSymbol(id.location, id.name, tcType, false)
+    val tcType2 = if (asArray) ArrayType.make(tcType) else tcType
+    return VarSymbol(id.location, id.name, tcType2, false)
 }
 
+// ----------------------------------------------------------------------------
+//                          Parameter List
+// ----------------------------------------------------------------------------
 
-
+private fun AstParameterList.generateSymbols(scope: SymbolTable) : List<VarSymbol> {
+    return parameters.map { it.generateSymbol(scope, isVariadic && it==parameters.last()) }
+}
 
 // ----------------------------------------------------------------------------
 //                          Identify Functions
@@ -363,23 +382,23 @@ private fun AstParameter.generateSymbol(scope: SymbolTable) : VarSymbol{
 private fun AstBlock.identifyFunctions(scope: SymbolTable) {
     for (stmt in statements)
         if (stmt is AstFunction) {
-            val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
+            val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
             val resultType = stmt.retType?.resolveType(scope) ?: UnitType
-            val functionType = FunctionType.make(tcParams.map { it.type }, resultType)
-            stmt.function = Function(stmt.location, stmt.name, tcParams, resultType, null)
+            val functionType = FunctionType.make(tcParams.map { it.type }, stmt.params.isVariadic, resultType)
+            stmt.function = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, resultType, null)
             val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
             tcParams.forEach{ stmt.symbolTable.add(it) }
             scope.add(sym)
 
         } else if (stmt is AstClass) {
-            val tcParams = stmt.params.map {  it.generateSymbol(stmt.symbolTable) }
-            stmt.constructor = Function(stmt.location, stmt.name, tcParams, UnitType, stmt.klass)
+            val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
+            stmt.constructor = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, UnitType, stmt.klass)
             stmt.klass.constructor = stmt.constructor
-            for(i in tcParams.indices) {
-                if (stmt.params[i].kind== TokenKind.EOL)
-                    stmt.symbolTable.add(tcParams[i])
+            for((index,param) in tcParams.withIndex()) {
+                if (stmt.params.parameters[index].kind== TokenKind.EOL)
+                    stmt.symbolTable.add(param)
                 else {
-                    val field = FieldSymbol(tcParams[i].location, tcParams[i].name, tcParams[i].type, (stmt.params[i].kind== TokenKind.VAR))
+                    val field = FieldSymbol(param.location, param.name, param.type, (stmt.params.parameters[index].kind== TokenKind.VAR))
                     stmt.klass.add(field)
                     stmt.symbolTable.add(field)
                 }
@@ -397,10 +416,10 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
 // and their types
 
 private fun AstClass.identifyFields(scope:SymbolTable) {
-    for (param in params) {
-        val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
-        scope.add(sym)
-    }
+//    for (param in params) {
+//        val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
+//        scope.add(sym)
+//    }
 
     for (stmt in statements) {
         if (stmt is AstDeclareField) {

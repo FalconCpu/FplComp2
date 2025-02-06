@@ -1,20 +1,22 @@
-
-ShortTerm:
-   class
-   when statement
-   repeat until
-   string comparison
-   stdlib: printf
-   stdlib: malloc
-
-Medium Term:
+Done:
+   class statements with fields
    peephole optimization
    register allocation
    asm code generation
 
+
+ShortTerm:
+   when statement
+   repeat until
+   string comparison
+   stdlib: printInt etc
+   stdlib: malloc
+
+Medium Term:
+   path dependant types
+   varargs
+
 Longer Term:
    inheritance
    abstract class
-   path dependant types
    generics?
-

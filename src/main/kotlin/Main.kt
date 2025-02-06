@@ -1,6 +1,5 @@
 package falcon
 
-import java.io.File
 import java.io.FileWriter
 
 fun main() {
@@ -23,7 +22,7 @@ fun runAssembler(filename:String) {
 
     val exitCode = process.waitFor()
     if (exitCode != 0)
-        Log.error("Assembly failed with exit code $exitCode")
+        Log.error(process.inputStream.bufferedReader().readText())
 }
 
 fun runProgram() : String {
@@ -33,7 +32,7 @@ fun runProgram() : String {
     val exitCode = process.waitFor()
     if (exitCode != 0)
         Log.error("Execution failed with exit code $exitCode")
-    return process.inputStream.bufferedReader().readText()
+    return process.inputStream.bufferedReader().readText().replace("\r\n", "\n")
 }
 
 fun compile(files:List<Lexer>, stopAt:StopAt) : String {
@@ -74,6 +73,7 @@ fun compile(files:List<Lexer>, stopAt:StopAt) : String {
     genAssemblyHeader(asm)
     for(func in funcs)
         func.genAssembly(asm)
+    DataSegment.output(asm)
     if (Log.hasErrors())
         return Log.getErrors()
     if (stopAt == StopAt.ASSEMBLY)

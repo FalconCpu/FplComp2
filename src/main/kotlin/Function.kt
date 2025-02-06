@@ -6,6 +6,7 @@ class Function(
     val location: Location,
     val name : String,
     val parameters: List<VarSymbol>,
+    val isVararg: Boolean,
     val returnType: Type,
     methodOf : ClassType?
 ) {
@@ -19,6 +20,7 @@ class Function(
     var maxRegister = 0
     var stackVarsSize = 0
     val thisSymbol = if (methodOf!=null) VarSymbol(location, "this", methodOf, false) else null
+    val regAssignmentComments = mutableListOf<String>()
 
     init {
         allFunctions.add(this)

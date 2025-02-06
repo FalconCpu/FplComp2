@@ -20,14 +20,49 @@ class ExecuteTest {
                 var key : Int 
                 var uartTx : Int
             
-            fun main()
+            fun printString(string:String)
                 val hwregs = (0xE0000000:HwRegs*)
-                hwregs.uartTx = 65
+                for i in 0 to< string.length
+                    hwregs.uartTx = (string[i] : Int)
+            
+            fun main()
+                printString("Hello, world!\n")
         """.trimIndent()
 
         val expected = """
-            A
+            Hello, world!
+            
         """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun variadicArgs() {
+        val input = """
+            class HwRegs
+                var sevenSeg : Int
+                var led : Int
+                var sw : Int
+                var key : Int 
+                var uartTx : Int
+
+            fun foo(args:Int...) -> Int
+                var total = 0
+                for index in 0 to< args.length
+                    total = total + args[index]
+                return total
+                
+            fun main()
+                val hwregs = (0xE0000000:HwRegs*)
+                val tot = foo(1,2,3,4)
+                hwregs.sevenSeg = tot
+        """.trimIndent()
+
+        val expected = """
+            7-Segment = 00000a
+            
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
 }

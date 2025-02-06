@@ -53,8 +53,7 @@ sealed class AstNode (val location:Location) {
 
             is AstFunction -> {
                 sb.append("Function $name\n")
-                for (param in params)
-                    param.dump(indent+1, sb)
+                params.dump(indent+1, sb)
                 retType?.dump(indent+1, sb)
                 for(stmt in statements)
                     stmt.dump(indent+1, sb)
@@ -145,8 +144,7 @@ sealed class AstNode (val location:Location) {
 
             is AstClass -> {
                 sb.append("Class $name\n")
-                for(param in params)
-                    param.dump(indent+1, sb)
+                params.dump(indent+1, sb)
                 for(stmt in statements)
                     stmt.dump(indent+1, sb)
             }
@@ -159,6 +157,12 @@ sealed class AstNode (val location:Location) {
             is AstTypePointer -> {
                 sb.append("TypePointer\n")
                 expr.dump(indent+1, sb)
+            }
+
+            is AstParameterList -> {
+                sb.append("ParameterList\n")
+                for(param in parameters)
+                    param.dump(indent+1, sb)
             }
         }
     }
@@ -221,12 +225,12 @@ class AstTopLevel() : AstBlock(Location.nullLocation, null) {
     }
 }
 
-class AstFunction(location: Location, val name:String, val params: List<AstParameter>, val retType:AstType?, parent:AstBlock)
+class AstFunction(location: Location, val name:String, val params: AstParameterList, val retType:AstType?, parent:AstBlock)
     : AstBlock(location, parent) {
         lateinit var function: Function
 }
 
-class AstClass(location: Location, val name:String, val params: List<AstParameter>, val klass: ClassType, parent:AstBlock)
+class AstClass(location: Location, val name:String, val params: AstParameterList, val klass: ClassType, parent:AstBlock)
     : AstBlock(location, parent) {
         lateinit var constructor: Function
 }
@@ -238,3 +242,5 @@ class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock
 
 // Miscellaneous classes
 class AstParameter(location: Location, val kind:TokenKind, val id: AstIdentifier, val type: AstType) : AstNode(location)
+
+class AstParameterList(val parameters:List<AstParameter>, val isVariadic: Boolean) : AstNode(Location.nullLocation)

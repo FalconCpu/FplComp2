@@ -24,7 +24,7 @@ class RegisterAllocator(private val func: Function, private val livemap: Livemap
     // List of MOV statements in the prog, where both operands are variables
     private val movStatements = func.prog.filterIsInstance<InstrMov>()
 
-    private val debug = true
+    private val debug = false
 
 
     /**
@@ -34,13 +34,14 @@ class RegisterAllocator(private val func: Function, private val livemap: Livemap
         for (instr in func.prog) {
             // Args written by an instruction interfere with everything live at that point
             // (Except for a MOV statement - no interference is created between its Dest and Src)
-            val dest = instr.getWrites() ?: continue
-            for (liveIndex in livemap.live[instr.index + 1].stream()) {
-                if (liveIndex != dest.index && !(instr is InstrMov && liveIndex == instr.src.index)) {
-                    interfere[dest.index] += liveIndex
-                    interfere[liveIndex] += dest.index
+            val dest = instr.getWrites()
+            if (dest != null)
+                for (liveIndex in livemap.live[instr.index + 1].stream()) {
+                    if (liveIndex != dest.index && !(instr is InstrMov && liveIndex == instr.src.index)) {
+                        interfere[dest.index] += liveIndex
+                        interfere[liveIndex] += dest.index
+                    }
                 }
-            }
 
             // A call statement could potentially clobber registers %1-%8, so mark those
             if (instr is InstrCall ) {
@@ -71,6 +72,8 @@ class RegisterAllocator(private val func: Function, private val livemap: Livemap
         assert(r in all_cpu_regs)
         assert(v in user_vars)
         assert(! interfere[r].contains(v))
+        if (func.vars[v] !is IRTemp)
+            func.regAssignmentComments += "${func.vars[v]} = ${func.vars[r]}"
 
         alloc[v] = r
         interfere[r] += interfere[v]

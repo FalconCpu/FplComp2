@@ -389,6 +389,14 @@ class TypeCheckingTest {
         val expected = """
             TopLevel
               Class Cat
+                Assign
+                  Member name (String)
+                    Variable this Cat
+                  Variable name String
+                Assign
+                  Member age (Int)
+                    Variable this Cat
+                  Variable age Int
               Function main
                 Declare cat Cat
                   Constructor (Cat)
@@ -459,6 +467,14 @@ class TypeCheckingTest {
         val expected = """
             TopLevel
               Class Cat
+                Assign
+                  Member name (String)
+                    Variable this Cat
+                  Variable name String
+                Assign
+                  Member age (Int)
+                    Variable this Cat
+                  Variable age Int
               Function main
                 Declare cat Cat*
                   New (Cat*)
@@ -472,4 +488,72 @@ class TypeCheckingTest {
         """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun variadicArgs() {
+        val input = """
+            fun foo(args:Int...) -> Int
+                var total = 0
+                for index in 0 to< args.length
+                    total = total + args[index]
+                return total
+                
+            fun main()
+                val tot = foo(1,2,3,4)
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function foo
+                Declare total Int
+                  IntLit 0 Int
+                ForRange index LT
+                  IntLit 0 Int
+                  Member length (Int)
+                    Variable args Array<Int>
+                  Assign
+                    Variable total Int
+                    Binop ADDI Int
+                      Variable total Int
+                      Index (Int)
+                        Variable args Array<Int>
+                        Variable index Int
+                Return
+                  Variable total Int
+              Function main
+                Declare tot Int
+                  FunctionCall (Int)
+                    FunctionLiteral foo
+                    IntLit 1 Int
+                    IntLit 2 Int
+                    IntLit 3 Int
+                    IntLit 4 Int
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun variadicArgsBad1() {
+        val input = """
+            fun foo(args:Int...) -> Int
+                var total = 0
+                for index in 0 to< args.length
+                    total = total + args[index]
+                return total
+                
+            fun main()
+                val tot = foo("1","2","3","4")
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:8.19: Type mismatch: expected Int but got String
+            input.fpl:8.23: Type mismatch: expected Int but got String
+            input.fpl:8.27: Type mismatch: expected Int but got String
+            input.fpl:8.31: Type mismatch: expected Int but got String
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+
 }

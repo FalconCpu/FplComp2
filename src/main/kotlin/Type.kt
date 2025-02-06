@@ -59,7 +59,9 @@ fun makeErrorType(location: Location, message: String): Type {
 class  ArrayType(val elementType: Type) : Type("Array<$elementType>") {
     companion object {
         private val allArrayTypes = mutableMapOf<Type, ArrayType>()
-        fun make(elementType: Type): ArrayType {
+        fun make(elementType: Type): Type {
+            if (elementType== ErrorType)
+                return ErrorType
             return allArrayTypes.getOrPut(elementType) { ArrayType(elementType) }
         }
     }
@@ -124,13 +126,14 @@ class  NullablePointerType(val elementType: Type) : Type("$elementType?") {
 //                       Function Types
 // ----------------------------------------------------------------------------
 
-class FunctionType(val parameterTypes: List<Type>, val returnType: Type)
-: Type("(${parameterTypes.joinToString(",")})->$returnType") {
+class FunctionType(val parameterTypes: List<Type>, val isVariadic:Boolean, val returnType: Type)
+: Type("(${parameterTypes.joinToString(",")})->$returnType") { //TODO variadic function name
     companion object {
         private val allFunctionTypes = mutableListOf<FunctionType>()
-        fun make(parameterTypes: List<Type>, returnType: Type): FunctionType {
+        fun make(parameterTypes: List<Type>, isVariadic: Boolean, returnType: Type): FunctionType {
             return allFunctionTypes.find{it.parameterTypes==parameterTypes && it.returnType==returnType} ?:
-                FunctionType(parameterTypes, returnType).also { allFunctionTypes.add(it) }
+                FunctionType(parameterTypes, isVariadic, returnType).also { allFunctionTypes.add(it) }
         }
     }
 }
+
