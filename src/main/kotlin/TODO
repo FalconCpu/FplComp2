@@ -4,21 +4,21 @@ Done:
    register allocation
    asm code generation
    varargs
-
+   null values
+   path dependant types
+   constructor calls
 
 ShortTerm:
-   constructor calls
+   stdlib: malloc
+   constructors calls in codegen
    when statement
    repeat until
-   string comparison
-   null values
-   stdlib: printInt etc
-   stdlib: malloc
-
-Medium Term:
-   path dependant types
+   string comparison ops
+   stdlib: printf
+   local allocations
 
 Longer Term:
    inheritance
+   'is' tests
    abstract class
    generics?

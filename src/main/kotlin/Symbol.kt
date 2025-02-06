@@ -46,6 +46,7 @@ val predefinedSymbols = definePredefinedSymbols()
 
 private fun definePredefinedSymbols(): SymbolTable {
     val symbolTable = SymbolTable()
+    symbolTable.add(TypeSymbol(Location.nullLocation, "Any", AnyType))
     symbolTable.add(TypeSymbol(Location.nullLocation, "Int", IntType))
     symbolTable.add(TypeSymbol(Location.nullLocation, "Real", RealType))
     symbolTable.add(TypeSymbol(Location.nullLocation, "String", StringType))

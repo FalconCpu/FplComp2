@@ -43,6 +43,14 @@ class PathContext(
             unreachable
         )
 
+    fun removeRefinedType(expr: TastExpression) : PathContext {
+        return if (expr is TastVariable)
+            removeRefinedType(expr.symbol)
+        else
+            this
+    }
+
+
     fun getType(symbol: Symbol): Type {
         return refinedTypes[symbol] ?: symbol.type
     }

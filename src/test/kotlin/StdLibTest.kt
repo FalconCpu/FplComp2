@@ -28,4 +28,36 @@ class StdLibTest {
         """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun printHex() {
+        val input = """            
+            
+            fun main()
+                printHex(0x1234ABCD)
+        """.trimIndent()
+
+        val expected = """
+            1234ABCD
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun printfTest() {
+        val input = """            
+            
+            fun main()
+                printf("Hex %x\n", 0x1234ABCD)
+                printf("String %s\n", "Hello world")
+        """.trimIndent()
+
+        val expected = """
+            Hex 1234ABCD
+            String Hello world
+            
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
 }

@@ -239,8 +239,8 @@ fun TastStatement.codeGen() {
                 else
                     currentFunc.addJump(clause.label)
                 currentFunc.addLabel(labelNext)
-                currentFunc.addJump(labelEnd)
             }
+            currentFunc.addJump(labelEnd)
             // Generate the code for the statements
             for (clause in clauses) {
                 currentFunc.addLabel(clause.label)

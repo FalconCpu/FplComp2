@@ -5,7 +5,47 @@ class HwRegs
     var key : Int
     var uartTx : Int
 
-fun printString(string:String)
+
+
+fun printChar(c:Char)
     val hwregs = (0xE0000000:HwRegs)
-    for i in 0 to< string.length
-        hwregs.uartTx = (string[i] : Int)
+    hwregs.uartTx = (c : Int)
+
+fun printString(string:String)
+   for i in 0 to< string.length
+        printChar(string[i])
+
+fun printHex(number:Int)
+    var n = number
+    for i in 0 to 7
+        val digit = n lsr 28
+        if (digit<=9)
+            printChar((digit + '0' : Char))
+        else
+            printChar((digit - 10 + 'A' : Char))
+        n = n lsl 4
+
+fun printf(format:String, args:Any...)
+    var argIndex = 0
+    var charIndex = 0
+    while charIndex < format.length
+        if format[charIndex] = '%'
+            charIndex = charIndex + 1
+            if charIndex >= format.length
+                return
+            elsif format[charIndex] = 'x'
+                printHex((args[argIndex] : Int))
+                argIndex = argIndex + 1
+            elsif format[charIndex] = 's'
+                printString((args[argIndex] : String))
+                argIndex = argIndex + 1
+            elsif format[charIndex] = 'c'
+                printHex((args[argIndex] : Int))
+                argIndex = argIndex + 1
+            else
+                printChar(format[charIndex])
+        else
+            printChar(format[charIndex])
+        charIndex = charIndex + 1
+    end while
+

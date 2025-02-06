@@ -5,7 +5,7 @@ sealed class Type(private val name:String) {
 
     // Check to see if 'other' is compatible with this type.  (Very simplistic for now - will be extended later.)
     fun isAssignableFrom(other: Type): Boolean {
-        if (this==other || other == ErrorType || this==ErrorType)
+        if (this==other || other == ErrorType || this==ErrorType || this== AnyType)
             return true
         return false
     }
@@ -25,6 +25,7 @@ sealed class Type(private val name:String) {
         StringType -> 4
         UnitType -> 0
         NullType -> 4
+        AnyType -> 4
         is ArrayType -> 4
         is FunctionType -> 4
         is NullableType -> 4
@@ -33,6 +34,7 @@ sealed class Type(private val name:String) {
 
 }
 
+object AnyType       : Type("Any")
 object UnitType      : Type("Unit")
 object NullType      : Type("Null")
 object BoolType      : Type("Bool")

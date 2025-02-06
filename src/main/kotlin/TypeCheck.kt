@@ -113,7 +113,7 @@ private val compOpTable = listOf(
 //                       Expressions
 // ----------------------------------------------------------------------------
 
-private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
+private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean=true) : TastExpression {
     return when (this) {
         is AstCharLiteral ->
             TastCharLiteral(location, value[0])
@@ -135,7 +135,8 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
                 is FieldSymbol -> TODO()
                 is FunctionSymbol -> TastFunctionLiteral(location, sym.function, sym.type)
                 is TypeSymbol -> TastTypeDescriptor(location, sym.type)
-                is VarSymbol -> TastVariable(location, sym, pathContext.getType(sym))
+                is VarSymbol -> TastVariable(location, sym,
+                    if (allowRefinedType) pathContext.getType(sym) else sym.type)
                 is UndefinedSymbol -> error("Got undefined symbol in type checking")
                 is ConstantSymbol -> TastIntLiteral(location, sym.value, sym.type)
             }
@@ -178,7 +179,11 @@ private fun AstExpression.typeCheck(scope: SymbolTable) : TastExpression {
             if (lhs.type == ErrorType)   return lhs
             if (rhs.type == ErrorType)   return rhs
 
-            val binop = binopTable.firstOrNull { it.op == op && it.left == lhs.type && it.right == rhs.type }
+            // Do type promotions
+            val lhsType = if (lhs.type== CharType) IntType else lhs.type
+            val rhsType = if (rhs.type== CharType) IntType else rhs.type
+
+            val binop = binopTable.firstOrNull { it.op==op && it.left==lhsType && it.right==rhsType }
             if(binop==null)
                 return TastError(location,"No operation '${op.text}' for types ${lhs.type} and ${rhs.type}")
             TastBinaryOp(location, binop.aluOp, lhs, rhs, binop.resultType)
@@ -273,7 +278,7 @@ private fun AstExpression.typeCheckRvalue(scope:SymbolTable) : TastExpression {
 //                        Lvalue
 // ----------------------------------------------------------------------------
 fun AstExpression.typeCheckLvalue(scope:SymbolTable) : TastExpression {
-    val ret = typeCheck(scope)
+    val ret = typeCheck(scope, false)
     when(ret) {
         is TastVariable -> {
             if (!ret.symbol.mutable && (ret.symbol !in pathContext.uninitialized))
@@ -417,33 +422,46 @@ private fun typeCheckArgList(location:Location, args:List<TastExpression>, param
 // ----------------------------------------------------------------------------
 
 private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
+    if (pathContext.unreachable)
+        Log.error(location,"Unreachable code")
+
     return when (this) {
         is AstTopLevel -> error("TopLevel statement should not be in a statement list")
 
         is AstWhile -> {
             val cond = expr.typeCheckBool(scope)
+            val pathContext1 = pathContextFalse
+            pathContext = pathContextTrue
             val ret = TastWhile(location, cond, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
+            pathContext = pathContext1
+            if (cond is TastIntLiteral && cond.value!=0)  // Check for while(true)... makes path unreachable
+                pathContext = pathContext.setUnreachable()
             ret
         }
 
         is AstAssign -> {
-            val lhs = lhs.typeCheckLvalue(scope)
             val rhs = rhs.typeCheckRvalue(scope)
+            val lhs = lhs.typeCheckLvalue(scope)
             rhs.checkType(lhs.type)
             if (lhs is TastVariable)
                 pathContext = pathContext.initialize(lhs.symbol)
+            pathContext = pathContext.addRefinedType(lhs, rhs.type)
             TastAssign(location, lhs, rhs)
         }
 
         is AstFunction -> {
             val ret = TastFunction(location, symbolTable, function)
             val oldFunction = currentFunction
+            val oldPathContext = pathContext
             currentFunction = function
             for(stmt in statements)
                 ret.add(stmt.typeCheck(symbolTable))
+            if (currentFunction.returnType!= UnitType && !pathContext.unreachable)
+                Log.error(location,"Function does not return a value along all paths")
             currentFunction = oldFunction
+            pathContext = oldPathContext
             ret
         }
 

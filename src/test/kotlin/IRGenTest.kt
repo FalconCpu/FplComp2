@@ -162,12 +162,10 @@ class IRGenTest {
             BEQI a, #0, @3
             JMP @2
             @2:
-            JMP @1
             MOV #1, 1
             BEQI a, #1, @5
             JMP @4
             @4:
-            JMP @1
             JMP @7
             @6:
             JMP @1
@@ -190,7 +188,7 @@ class IRGenTest {
             @0:
             RET [$8]
             
-
+            
             """.trimIndent()
         runTest(input, expected)
     }

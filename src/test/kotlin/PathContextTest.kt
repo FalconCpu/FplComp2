@@ -245,4 +245,86 @@ class PathContextTest {
         runTest(input, expected)
     }
 
+    @Test
+    fun whileStatement() {
+        val input = """
+            class LinkedList(val next:LinkedList?, val data:Int)
+            
+            fun sum(list:LinkedList?) -> Int
+                var total = 0
+                var p = list
+                while p!=null
+                    total = total + p.data
+                    p = p.next
+                return total
+            """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class LinkedList
+                Assign
+                  Member next (LinkedList?)
+                    Variable this LinkedList
+                  Variable next LinkedList?
+                Assign
+                  Member data (Int)
+                    Variable this LinkedList
+                  Variable data Int
+              Function sum
+                Declare total Int
+                  IntLit 0 Int
+                Declare p LinkedList?
+                  Variable list LinkedList?
+                While
+                  Compare NEI Bool
+                    Variable p LinkedList?
+                    IntLit 0 Null
+                  Assign
+                    Variable total Int
+                    Binop ADDI Int
+                      Variable total Int
+                      Member data (Int)
+                        Variable p LinkedList
+                  Assign
+                    Variable p LinkedList?
+                    Member next (LinkedList?)
+                      Variable p LinkedList
+                Return
+                  Variable total Int
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun unrachableCode1() {
+        val input = """           
+            fun sum() -> Int
+                var total = 0
+                return 3
+                val a = 3
+            """.trimIndent()
+
+        val expected = """
+            input.fpl:4.5: Unreachable code
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+
+    @Test
+    fun notReturnOnAllPaths() {
+        val input = """           
+            fun sum(a:Int) -> Int
+                if a>4
+                    return 1
+            """.trimIndent()
+
+        val expected = """
+            input.fpl:1.5: Function does not return a value along all paths
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+
 }
