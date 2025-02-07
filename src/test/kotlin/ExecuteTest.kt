@@ -65,4 +65,48 @@ class ExecuteTest {
         runTest(input, expected)
     }
 
+
+    @Test
+    fun printInt() {
+        val input = """
+            class HwRegs
+                var sevenSeg : Int
+                var led : Int
+                var sw : Int
+                var key : Int 
+                var uartTx : Int
+
+            fun printChar(c:Char) 
+                val hwregs = (0xE0000000:HwRegs)
+                hwregs.uartTx = (c:Int)
+
+            fun printInt(n:Int)
+                var number = n
+                if (n<0) 
+                    printChar('-')
+                    number = -number
+                val buffer = local Array<Char>(10)
+                var index = 0
+                repeat
+                    var digit = number % 10
+                    number = number / 10
+                    buffer[index] = (digit + '0' : Char)
+                    index = index + 1
+                until number = 0
+                for i in index-1 to >= 0
+                    printChar(buffer[i])
+            
+            fun main()
+                printInt(12345)
+                printChar('\n')
+                printInt(-56789)
+        """.trimIndent()
+
+        val expected = """
+            12345
+            -56789
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
 }

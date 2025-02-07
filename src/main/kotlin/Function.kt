@@ -2,6 +2,8 @@ package falcon
 
 val allFunctions = mutableListOf<Function>()
 
+class StackAlloc(val startAddress:Int, val endAddress:Int)
+
 class Function(
     val location: Location,
     val name : String,
@@ -21,6 +23,7 @@ class Function(
     var stackVarsSize = 0
     val thisSymbol = if (methodOf!=null) VarSymbol(location, "this", methodOf, false) else null
     val regAssignmentComments = mutableListOf<String>()
+    private val stackAllocations = mutableListOf<StackAlloc>()
 
     init {
         allFunctions.add(this)
@@ -121,6 +124,22 @@ class Function(
 
     fun mapSymbol(symbol:VarSymbol) : IRVar = symbols.getOrPut(symbol) {
         IRVar(symbol.name).also{vars+=it}
+    }
+
+    fun stackAlloc(size: Int) : StackAlloc {
+        val roundedSize = (size+3) and (0xFFFFC)   // round size up to multiple of 4
+        val startAddress = if (stackAllocations.isEmpty()) 0 else stackAllocations.last().endAddress
+        val endAddress = startAddress+roundedSize
+        if (endAddress > stackVarsSize)
+            stackVarsSize = endAddress
+        val ret = StackAlloc(startAddress, endAddress)
+        stackAllocations += ret
+        return ret
+    }
+
+    fun freeStackAlloc(stackAlloc: StackAlloc) {
+        require(stackAlloc in stackAllocations)
+        stackAllocations -= stackAlloc
     }
 }
 

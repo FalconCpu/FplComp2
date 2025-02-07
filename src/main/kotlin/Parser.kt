@@ -141,7 +141,8 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun parseNew() : AstExpression {
-        val location = lookahead.location
+        val tok = nextToken()
+        val isLocal = tok.kind==LOCAL
         if (canTake(ARRAY)) {
             expect(LT)
             val type = parseType()
@@ -149,7 +150,7 @@ class Parser(private val lexer: Lexer) {
             expect(OPENB)
             val size = parseExpression()
             expect(CLOSEB)
-            return AstNewArray(location, type, size)
+            return AstNewArray(tok.location, type, size, isLocal)
         } else {
             val type = parseTypeIdentifier()
             expect(OPENB)
@@ -159,7 +160,7 @@ class Parser(private val lexer: Lexer) {
                     args.add(parseExpression())
                 } while (canTake(COMMA))
             expect(CLOSEB)
-            return AstConstructor(location, type, args)
+            return AstConstructor(tok.location, type, args, isLocal)
         }
     }
 
@@ -168,7 +169,7 @@ class Parser(private val lexer: Lexer) {
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NOT))
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
-        if (canTake(NEW))
+        if (lookahead.kind==NEW || lookahead.kind==LOCAL)
             return parseNew()
         return parsePostfix()
     }
@@ -379,6 +380,21 @@ class Parser(private val lexer: Lexer) {
         parseOptionalEnd(WHILE)
     }
 
+    private fun parseRepeat(block: AstBlock) {
+        val tok = expect(REPEAT)
+        expectEol()
+        val ret = AstRepeat(tok.location, block)
+        block.add(ret)
+        if (lookahead.kind==INDENT)
+            parseIndentedBlock(ret)
+        else
+            Log.error(lookahead.location, "Expected indented block after repeat")
+        expect(UNTIL)
+        ret.expr = parseExpression()
+        expectEol()
+    }
+
+
     private fun parseAssign(block:AstBlock) {
         val lhs = parsePostfix()
         if (canTake(EQ)) {
@@ -511,6 +527,7 @@ class Parser(private val lexer: Lexer) {
             VAL -> parseVarDecl(block)
             RETURN -> parseReturn(block)
             WHILE -> parseWhile(block)
+            REPEAT -> parseRepeat(block)
             IDENTIFIER, OPENB -> parseAssign(block)
             FOR -> parseFor(block)
             IF -> parseIf(block)

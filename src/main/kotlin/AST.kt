@@ -115,6 +115,13 @@ sealed class AstNode (val location:Location) {
                     stmt.dump(indent+1, sb)
             }
 
+            is AstRepeat -> {
+                sb.append("Repeat\n")
+                expr.dump(indent+1, sb)
+                for(stmt in statements)
+                    stmt.dump(indent+1, sb)
+            }
+
             is AstAssign -> {
                 sb.append("Assign\n")
                 lhs.dump(indent+1, sb)
@@ -228,8 +235,8 @@ class AstMember(location: Location, val expr: AstExpression, val name: String) :
 class AstUnaryOp(location: Location, val op: TokenKind, val expr: AstExpression) : AstExpression(location)
 class AstCast(location: Location, val expr: AstExpression, val type: AstType) : AstExpression(location)
 class AstFunctionCall(location: Location, val expr: AstExpression, val args: List<AstExpression>) : AstExpression(location)
-class AstNewArray(location: Location, val elType: AstType, val size: AstExpression) : AstExpression(location)
-class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>) : AstExpression(location)
+class AstNewArray(location: Location, val elType: AstType, val size: AstExpression, val isLocal:Boolean) : AstExpression(location)
+class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>, val isLocal:Boolean) : AstExpression(location)
 
 
 // Type description classes
@@ -272,6 +279,7 @@ class AstClass(location: Location, val name:String, val params: AstParameterList
 }
 
 class AstWhile(location: Location, val expr: AstExpression, parent:AstBlock) : AstBlock(location, parent)
+class AstRepeat(location: Location, parent:AstBlock) : AstBlock(location, parent) {lateinit var expr: AstExpression}
 class AstForRange(location: Location, val id: AstIdentifier, val from: AstExpression, val to: AstExpression, val comparator: TokenKind, parent:AstBlock)
     : AstBlock(location, parent)
 class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock) : AstBlock(location, parent) {

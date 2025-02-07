@@ -76,6 +76,13 @@ sealed class Tast(val location: Location) {
                     stmt.dump(indent + 1, sb)
             }
 
+            is TastRepeat -> {
+                sb.append("Repeat\n")
+                expr.dump(indent + 1, sb)
+                for (stmt in statements)
+                    stmt.dump(indent + 1, sb)
+            }
+
             is TastCast -> {
                 sb.append("Cast ($type)\n")
                 expr.dump(indent + 1, sb)
@@ -186,9 +193,9 @@ class TastIndex(location: Location, val expr: TastExpression, val index: TastExp
 class TastFunctionCall(location: Location, val func: TastExpression, val args: List<TastExpression>, type:Type) : TastExpression(location, type)
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type) : TastExpression(location, type)
 class TastTypeDescriptor(location: Location, type:Type) : TastExpression(location,type)
-class TastConstructor(location: Location, val args:List<TastExpression>, type:Type) : TastExpression(location,type)
+class TastConstructor(location: Location, val args:List<TastExpression>, val isLocal:Boolean, type:Type) : TastExpression(location,type)
 class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
-class TastNewArray(location: Location, val size:TastExpression, type:Type) : TastExpression(location, type)
+class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
 
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
@@ -228,6 +235,9 @@ class TastTopLevel(location: Location, symbolTable: SymbolTable) : TastBlock(loc
 class TastWhile(location: Location, val expr: TastExpression, symbolTable: SymbolTable)
     : TastBlock(location, symbolTable)
 
+class TastRepeat(location: Location, val expr: TastExpression, symbolTable: SymbolTable)
+    : TastBlock(location, symbolTable)
+
 class TastForRange(location: Location, val sym: VarSymbol, val from: TastExpression, val to: TastExpression, val comparator: TokenKind, symbolTable: SymbolTable)
     : TastBlock(location, symbolTable)
 
@@ -240,6 +250,4 @@ class TastIfClause(location: Location, val expr: TastExpression?, symbolTable: S
     }
 
 class TastClass(location: Location, symbolTable: SymbolTable, val constructor: Function)
-    : TastBlock(location, symbolTable) {
-    lateinit var label : Label
-}
+    : TastBlock(location, symbolTable)

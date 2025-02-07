@@ -180,46 +180,44 @@ enum class AluOp {
         else -> false
     }
 
-    companion object {
-        fun eval(op:AluOp, lhs:Int, rhs:Int) : Int = when(op) {
-            ADDI -> lhs + rhs
-            SUBI -> lhs - rhs
-            MULI -> lhs * rhs
-            DIVI -> lhs / rhs
-            MODI -> lhs % rhs
-            LSLI -> lhs shl (rhs and 31)
-            ASRI -> lhs shr (rhs and 31)
-            LSRI -> lhs ushr (rhs and 31)
-            ANDI -> lhs and rhs
-            ORI -> lhs or rhs
-            XORI -> lhs xor rhs
-            EQI -> if (lhs == rhs) 1 else 0
-            NEI -> if (lhs != rhs) 1 else 0
-            GTI -> if (lhs > rhs) 1 else 0
-            GEI -> if (lhs >= rhs) 1 else 0
-            LTI -> if (lhs < rhs) 1 else 0
-            LEI -> if (lhs <= rhs) 1 else 0
-            ADDR -> TODO()
-            SUBR -> TODO()
-            MULR -> TODO()
-            DIVR -> TODO()
-            MODR -> TODO()
-            EQR -> TODO()
-            NER -> TODO()
-            GTR -> TODO()
-            GER -> TODO()
-            LTR -> TODO()
-            LER -> TODO()
-            ADDS -> TODO()
-            EQS -> TODO()
-            NES -> TODO()
-            GTS -> TODO()
-            GES -> TODO()
-            LTS -> TODO()
-            LES -> TODO()
-            ANDB -> TODO()
-            ORB -> TODO()
-            ERROR -> TODO()
-        }
+    fun eval(lhs:Int, rhs:Int) : Int = when(this) {
+        ADDI -> lhs + rhs
+        SUBI -> lhs - rhs
+        MULI -> lhs * rhs
+        DIVI -> lhs / rhs
+        MODI -> lhs % rhs
+        LSLI -> lhs shl (rhs and 31)
+        ASRI -> lhs shr (rhs and 31)
+        LSRI -> lhs ushr (rhs and 31)
+        ANDI -> lhs and rhs
+        ORI -> lhs or rhs
+        XORI -> lhs xor rhs
+        EQI -> if (lhs == rhs) 1 else 0
+        NEI -> if (lhs != rhs) 1 else 0
+        GTI -> if (lhs > rhs) 1 else 0
+        GEI -> if (lhs >= rhs) 1 else 0
+        LTI -> if (lhs < rhs) 1 else 0
+        LEI -> if (lhs <= rhs) 1 else 0
+        ADDR -> TODO()
+        SUBR -> TODO()
+        MULR -> TODO()
+        DIVR -> TODO()
+        MODR -> TODO()
+        EQR -> TODO()
+        NER -> TODO()
+        GTR -> TODO()
+        GER -> TODO()
+        LTR -> TODO()
+        LER -> TODO()
+        ADDS -> TODO()
+        EQS -> TODO()
+        NES -> TODO()
+        GTS -> TODO()
+        GES -> TODO()
+        LTS -> TODO()
+        LES -> TODO()
+        ANDB -> TODO()
+        ORB -> TODO()
+        ERROR -> TODO()
     }
 }

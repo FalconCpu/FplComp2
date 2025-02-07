@@ -519,4 +519,95 @@ class TypeCheckingTest {
         """.trimIndent()
         runTest(input, expected)
     }
+
+
+    @Test
+    fun localArrayTest() {
+        val input = """
+            fun foo() 
+                val array = local Array<Int>(10)
+                for i in 0 to< array.length
+                    array[i] = i
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function foo
+                Declare array Array<Int>
+                  NewArray (Array<Int>)
+                    IntLit 10 Int
+                ForRange i LT
+                  IntLit 0 Int
+                  Member length (Int)
+                    Variable array Array<Int>
+                  Assign
+                    Index (Int)
+                      Variable array Array<Int>
+                      Variable i Int
+                    Variable i Int
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun localArrayNotCompileTimeSized() {
+        val input = """
+            fun foo(a:Int) 
+                val array = local Array<Int>(a)   # error as not compile time constant
+                for i in 0 to< array.length
+                    array[i] = i
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:2.34: Value is not compile time constant
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun repeatTest() {
+        val input = """
+            fun foo()
+                var a = 0
+                repeat
+                    a=a+1
+                until a=10
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function foo
+                Declare a Int
+                  IntLit 0 Int
+                Repeat
+                  Compare EQI Bool
+                    Variable a Int
+                    IntLit 10 Int
+                  Assign
+                    Variable a Int
+                    Binop ADDI Int
+                      Variable a Int
+                      IntLit 1 Int
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun constantFolding() {
+        val input = """
+            fun foo()
+                var a = 1 + 2
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function foo
+                Declare a Int
+                  IntLit 3 Int
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
 }

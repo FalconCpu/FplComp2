@@ -52,6 +52,21 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
 }
 
 // ----------------------------------------------------------------------------
+//                       Compile Time constants
+// ----------------------------------------------------------------------------
+
+fun TastExpression.isCompileTimeConstant() : Boolean {
+    return this is TastIntLiteral
+}
+
+fun TastExpression.getCompileTimeConstant() : Int {
+    check (this is TastIntLiteral)
+    return this.value
+}
+
+
+
+// ----------------------------------------------------------------------------
 //                       BinaryOperations
 // ----------------------------------------------------------------------------
 
@@ -186,7 +201,12 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             val binop = binopTable.firstOrNull { it.op==op && it.left==lhsType && it.right==rhsType }
             if(binop==null)
                 return TastError(location,"No operation '${op.text}' for types ${lhs.type} and ${rhs.type}")
-            TastBinaryOp(location, binop.aluOp, lhs, rhs, binop.resultType)
+
+            if (lhs.isCompileTimeConstant() && rhs.isCompileTimeConstant() && lhs.type== IntType) {
+                val value = binop.aluOp.eval(lhs.getCompileTimeConstant(), rhs.getCompileTimeConstant())
+                TastIntLiteral(location, value,IntType)
+            } else
+                TastBinaryOp(location, binop.aluOp, lhs, rhs, binop.resultType)
         }
 
         is AstCast -> {
@@ -238,7 +258,21 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 TastError(location,"Got type '${expr.type}' when expecting class")
         }
 
-        is AstUnaryOp -> TODO()
+        is AstUnaryOp -> {
+            when(op) {
+                TokenKind.MINUS -> {
+                    val arg = expr.typeCheckRvalue(scope)
+                    if (arg.type== IntType)
+                        TastBinaryOp(location, AluOp.SUBI, TastIntLiteral(location, 0, IntType), arg, IntType)
+                    else
+                        TastError(location,"No operation defined for unary minus '${arg.type}'")
+                }
+
+                else -> {
+                    TastError(location,"Invalid Unary operator $op")
+                }
+            }
+        }
 
         is AstConstructor -> {
             val type = astType.resolveType(scope)
@@ -246,14 +280,16 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 return TastError(location,"Got type '$type' when expecting class")
             val args = args.map { it.typeCheckRvalue(scope) }
             typeCheckArgList(location, args, type.constructor.parameters.map{it.type}, false)
-            TastConstructor(location, args, type)
+            TastConstructor(location, args, isLocal, type)
         }
 
         is AstNewArray -> {
             val elementType = elType.resolveType(scope)
             val size = size.typeCheckRvalue(scope)
             size.checkType(IntType)
-            TastNewArray(location, size, ArrayType.make(elementType))
+            if (isLocal && !size.isCompileTimeConstant())
+                Log.error(size.location, "Value is not compile time constant")
+            TastNewArray(location, size, isLocal, ArrayType.make(elementType))
         }
     }
 }
@@ -380,6 +416,20 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             TastOrOp(location, lhs, rhs, BoolType)
         }
 
+        is AstUnaryOp -> {
+            if (op == TokenKind.NOT) {
+                val ret = expr.typeCheckBool(scope)
+                val tmp = pathContextTrue
+                pathContextTrue = pathContextFalse
+                pathContextFalse = tmp
+                ret
+            } else {
+                val ret = typeCheckRvalue(scope)
+                ret.checkType(BoolType)
+                ret
+            }
+        }
+
         else -> {
             val ret = typeCheckRvalue(scope)
             ret.checkType(BoolType)
@@ -437,6 +487,20 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
                 ret.add(stmt.typeCheck(ret.symbolTable))
             pathContext = pathContext1
             if (cond is TastIntLiteral && cond.value!=0)  // Check for while(true)... makes path unreachable
+                pathContext = pathContext.setUnreachable()
+            ret
+        }
+
+        is AstRepeat -> {
+            val pathContext0 = pathContext
+            val cond = expr.typeCheckBool(scope)
+            val pathContext1 = pathContextTrue
+            pathContext = listOf(pathContext0, pathContextFalse).merge()
+            val ret = TastRepeat(location, cond, symbolTable)
+            for (stmt in statements)
+                ret.add(stmt.typeCheck(ret.symbolTable))
+            pathContext = pathContext1
+            if (cond.isCompileTimeConstant() && cond.getCompileTimeConstant()==0)  // Check for while(true)... makes path unreachable
                 pathContext = pathContext.setUnreachable()
             ret
         }

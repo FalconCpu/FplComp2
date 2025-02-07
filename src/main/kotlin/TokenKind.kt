@@ -20,7 +20,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     BAR("|", true),
     EQ("=", true),
     LT("<", true),
-    GT(">", true),
+    GT(">", false),    // Bit of a hack here - cannot continue line as could be end of generic parameter
     LE("<=", true),
     GE(">=", true),
     NE("!=", true),
@@ -38,6 +38,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     AND("and", true),
     OR("or", true),
     NEW("new",true),
+    LOCAL("local",true),
     NOT("not", true),
     TILDE("~", true),
     LSL("lsl", true),

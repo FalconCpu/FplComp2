@@ -187,7 +187,8 @@ class Peephole(private val func: Function) {
                 val bConst = right.isSmallInt()
 
                 if (aConst && bConst) {
-                    TODO("compute constant")
+                    val value = op.eval(left.getConstantValue(), right.getConstantValue())
+                    return replaceWith(InstrMovi(dest, value))
                 }
 
                 if (bConst)

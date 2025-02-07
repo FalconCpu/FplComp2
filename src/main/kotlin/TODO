@@ -7,15 +7,18 @@ Done:
    null values
    path dependant types
    constructor calls
+   repeat until
+   compile time evaluation of constants
 
 ShortTerm:
    stdlib: malloc
    constructors calls in codegen
    when statement
-   repeat until
    string comparison ops
-   stdlib: printf
-   local allocations
+   stdlib: printf width specifiers
+   local allocations of objects
+   += -= etc
+   not operator in if/else
 
 Longer Term:
    inheritance

@@ -1,19 +1,38 @@
 class HwRegs
-    var sevenSeg : Int
-    var led : Int
-    var sw : Int
-    var key : Int
-    var uartTx : Int
-
-
+    var sevenSeg : Int      # Sets the value on the 7-segment display (6 hex digits)
+    var led : Int           # Sets the value on the LEDs (10 bits)
+    var sw : Int            # Reads the value of the switches (10 bits)
+    var key : Int           # Reads the value of the keys (4 bits)
+    var uartTx : Int        # Write: sends a byte to the UART
+                            # Read: Returns the number of free bytes in the UART's buffer
+    var uartRX: Int         # Read: Returns a byte from the UART - or -1 if no byte is available
 
 fun printChar(c:Char)
     val hwregs = (0xE0000000:HwRegs)
+    while hwregs.uartTx<=1
+        val a = 0  # dummy instruction
     hwregs.uartTx = (c : Int)
 
 fun printString(string:String)
    for i in 0 to< string.length
         printChar(string[i])
+
+fun printInt(n:Int)
+    var number = n
+    if (n<0)
+        printChar('-')
+        number = -number
+    val buffer = local Array<Char>(10)
+    var index = 0
+    repeat
+        var digit = number % 10
+        number = number / 10
+        buffer[index] = (digit + '0' : Char)
+        index = index + 1
+    until number = 0
+    for i in index-1 to >= 0
+        printChar(buffer[i])
+
 
 fun printHex(number:Int)
     var n = number
@@ -40,7 +59,10 @@ fun printf(format:String, args:Any...)
                 printString((args[argIndex] : String))
                 argIndex = argIndex + 1
             elsif format[charIndex] = 'c'
-                printHex((args[argIndex] : Int))
+                printChar((args[argIndex] : Char))
+                argIndex = argIndex + 1
+            elsif format[charIndex] = 'd'
+                printInt((args[argIndex] : Int))
                 argIndex = argIndex + 1
             else
                 printChar(format[charIndex])

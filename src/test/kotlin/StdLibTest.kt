@@ -46,15 +46,18 @@ class StdLibTest {
     @Test
     fun printfTest() {
         val input = """            
-            
             fun main()
-                printf("Hex %x\n", 0x1234ABCD)
-                printf("String %s\n", "Hello world")
+                printf("Hex: %x\n", 305441741)   # Expected output: "Hex: 1234ABCD"
+                printf("String: %s\n", "Hello")  # Expected output: "String: Hello"
+                printf("Char: %c\n", 'A')        # Expected output: "Char: A"
+                printf("Integer: %d %d\n", 12345, -67890)  # Expected output: "Char: A"
         """.trimIndent()
 
         val expected = """
-            Hex 1234ABCD
-            String Hello world
+            Hex: 1234ABCD
+            String: Hello
+            Char: A
+            Integer: 12345 -67890
             
         """.trimIndent()
         runTest(input, expected)

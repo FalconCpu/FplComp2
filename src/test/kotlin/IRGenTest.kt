@@ -193,5 +193,46 @@ class IRGenTest {
         runTest(input, expected)
     }
 
+    @Test
+    fun localArrayTest() {
+        val input = """
+            fun foo() 
+                val array = local Array<Int>(10)
+                for i in 0 to< array.length
+                    array[i] = i
+        """.trimIndent()
+
+        val expected = """
+            Function <TopLevel>:
+            START
+            RET []
+            
+            Function foo:
+            START
+            MOV #0, 10
+            ADDI #1, $31, 4
+            ST4 #0, #1[length]
+            MOV array, #1
+            MOV #2, 0
+            LD4 #3, array[length]
+            MOV i, #2
+            JMP @2
+            @1:
+            MULI #4, i, 4
+            ADDI #5, array, #4
+            ST4 i, #5[0]
+            ADDI i, i, 1
+            @2:
+            BLTI i, #3, @1
+            @3:
+            @0:
+            RET []
+            
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+
 
 }
