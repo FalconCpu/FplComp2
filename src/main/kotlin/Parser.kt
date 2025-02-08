@@ -19,6 +19,12 @@ class Parser(private val lexer: Lexer) {
         throw ParseError(lookahead.location, "Got  $lookahead when expecting ${kind.text}")
     }
 
+    private fun expect(kind1:TokenKind, kind2:TokenKind) :Token {
+        if (lookahead.kind == kind1 || lookahead.kind == kind2)
+            return nextToken()
+        throw ParseError(lookahead.location, "Got  $lookahead when expecting ${kind1.text}")
+    }
+
     private fun canTake(kind: TokenKind) : Boolean {
         if (lookahead.kind==kind) {
             nextToken()
@@ -342,11 +348,11 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseFunction(block: AstBlock) {
         expect(FUN)
-        val id = parseIdentifier()
+        val id = expect(IDENTIFIER,DELETE)
         val params = parseParameterList()
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
-        val ret = AstFunction(id.location, id.name, params, retType, block)
+        val ret = AstFunction(id.location, id.text, params, retType, block)
         block.add(ret)
 
         if (lookahead.kind==INDENT) {
@@ -375,6 +381,14 @@ class Parser(private val lexer: Lexer) {
         val expr = if (lookahead.kind!=EOL) parseExpression() else null
         expectEol()
         block.add(AstReturn(loc, expr))
+    }
+
+    private fun parseDelete(block: AstBlock) {
+        expect(DELETE)
+        val loc = lookahead.location
+        val expr = parseExpression()
+        expectEol()
+        block.add(AstDeleteStatement(loc, expr))
     }
 
     private fun parseWhile(block: AstBlock) {
@@ -541,6 +555,7 @@ class Parser(private val lexer: Lexer) {
             IDENTIFIER, OPENB -> parseAssign(block)
             FOR -> parseFor(block)
             IF -> parseIf(block)
+            DELETE -> parseDelete(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")

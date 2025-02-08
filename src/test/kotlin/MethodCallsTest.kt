@@ -262,6 +262,33 @@ class MethodCallsTest {
         runTest(input, expected)
     }
 
+    @Test
+    fun destructorTest() {
+        val input = """
+            class Printer()
+                fun printMessage()
+                    printf("Hello from printer\n")
+                
+                fun delete()
+                    printf("Destructor called\n")
+
+            fun main()
+                var p = new Printer()
+                p.printMessage()  
+                delete p
+                dumpMemory()
+        """.trimIndent()
+
+        val expected = """
+            Hello from printer
+            Destructor called
+            00001000       10 FREE
+            00001010  3F7EFF0 FREE
+            
+            
+        """.trimIndent()
+        runTest(input, expected)
+    }
 
     // @Test
     fun emptyTest() {

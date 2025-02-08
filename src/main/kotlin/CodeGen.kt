@@ -348,6 +348,29 @@ fun TastStatement.codeGen() {
                 currentFunc.add(InstrStoreGlobal(4, rhs, symbol))
             }
 
+        is TastDelete -> {
+            val rhs = expr.codeGen()
+            val label = currentFunc.newLabel()
+
+            // If the expression is nullable, add a null check
+            val klass = if (expr.type is NullableType) {
+                currentFunc.add(InstrBranch(AluOp.EQI, rhs, machineRegs[0], label))
+                expr.type.elementType as ClassType
+            } else
+                expr.type as ClassType
+
+            // If the class has a destructor, call it
+            val destructorSymbol = klass.methods.find{it.name=="delete"}
+            if (destructorSymbol!=null) {
+                currentFunc.addMov(machineRegs[1], rhs)
+                currentFunc.addCall(destructorSymbol.function, listOf(machineRegs[1]))
+            }
+
+            // Delete the object
+            currentFunc.addMov(machineRegs[1], rhs)
+            currentFunc.addCall(Stdlib.free, listOf(machineRegs[1]))
+            currentFunc.addLabel(label)
+        }
     }
 }
 

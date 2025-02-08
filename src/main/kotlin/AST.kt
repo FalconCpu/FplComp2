@@ -209,6 +209,11 @@ sealed class AstNode (val location:Location) {
                 elType.dump(indent+1, sb)
                 size.dump(indent+1, sb)
             }
+
+            is AstDeleteStatement -> {
+                sb.append("Delete\n")
+                expr.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -267,6 +272,7 @@ class AstReturn(location: Location, val expr: AstExpression?) : AstStatement(loc
 class AstAssign(location: Location, val lhs: AstExpression, val rhs: AstExpression) : AstStatement(location)
 class AstExpressionStatement(location: Location, val expr: AstExpression) : AstStatement(location)
 class AstIfStatement(location: Location, val clauses: List<AstIfClause>) : AstStatement(location)
+class AstDeleteStatement(location: Location, val expr: AstExpression) : AstStatement(location)
 
 // Block classes
 class AstTopLevel() : AstBlock(Location.nullLocation, null) {

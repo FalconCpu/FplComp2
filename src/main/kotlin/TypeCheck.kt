@@ -662,6 +662,14 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             currentFunction = oldFunction
             ret
         }
+
+        is AstDeleteStatement -> {
+            val expr = expr.typeCheck(scope)
+            val type = expr.type
+            if (type !is ClassType && !(type is NullableType && type.elementType is ClassType) && type !is ErrorType )
+                Log.error(location, "Cannot delete expression of type $type")
+            return TastDelete(location, expr)
+        }
     }
 }
 
