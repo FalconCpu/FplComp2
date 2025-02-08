@@ -1,6 +1,5 @@
 package falcon
 
-
 // ----------------------------------------------------------------------------
 //                       Type Checking
 // ----------------------------------------------------------------------------
@@ -148,7 +147,11 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 scope.lookup(name) ?:
                 VarSymbol(location,name,makeErrorType(location, "Undefined variable: '$name'"), false).also { scope.add(it) }
             when (sym) {
-                is FieldSymbol -> TODO()
+                is FieldSymbol -> {
+                    val thisSym = scope.lookup("this") ?: error("No 'this' in scope at $location")
+                    val thisExpr = TastVariable(location, thisSym as VarSymbol , thisSym.type)
+                    TastMember(location, thisExpr, sym, sym.type)
+                }
                 is FunctionSymbol -> TastFunctionLiteral(location, sym.function, sym.type)
                 is TypeSymbol -> TastTypeDescriptor(location, sym.type)
                 is VarSymbol -> TastVariable(location, sym,
@@ -246,15 +249,29 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             val expr = expr.typeCheckRvalue(scope)
             if ((expr.type is StringType || expr.type is ArrayType) && name == "length")
                 TastMember(location, expr, lengthSymbol, IntType)
+
             else if (expr.type is ClassType) {
-                val sym = expr.type.fields.find { it.name == name } ?:
+                val sym = expr.type.lookup(name) ?:
                     FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"),false)
-                TastMember(location, expr, sym, sym.type)
+                if (sym is FieldSymbol)
+                    TastMember(location, expr, sym, sym.type)
+                else if (sym is FunctionSymbol)
+                    TastMethodLiteral(location, sym.function, expr, sym.type)
+                else
+                    TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
+
             } else if (expr.type is NullableType && expr.type.elementType is ClassType) {
                     Log.error(location,"Value may be null")
-                    val sym = expr.type.elementType.fields.find{it.name==name} ?:
+                    val sym = expr.type.elementType.lookup(name) ?:
                     FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"), false)
-                    TastMember(location,expr,sym, sym.type)
+
+                if (sym is FieldSymbol)
+                    TastMember(location, expr, sym, sym.type)
+                else if (sym is FunctionSymbol)
+                    TastFunctionLiteral(location, sym.function, sym.type)
+                else
+                    TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
+
             } else if (expr.type== ErrorType)
                 expr
             else
@@ -673,36 +690,47 @@ private fun AstParameterList.generateSymbols(scope: SymbolTable) : List<VarSymbo
 // and their parameters, adding them to the symbol table. This is done to allow
 // forward references.
 
-private fun AstBlock.identifyFunctions(scope: SymbolTable) {
-    for (stmt in statements)
+private fun AstBlock.identifyFunctions(scope: SymbolTable, klass:ClassType?) {
+    for (stmt in statements) {
         if (stmt is AstFunction) {
             val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
             val resultType = stmt.retType?.resolveType(scope) ?: UnitType
             val functionType = FunctionType.make(tcParams.map { it.type }, stmt.params.isVariadic, resultType)
-            stmt.function = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, resultType, null)
+            val qualName = if (klass==null) stmt.name else "$klass/${stmt.name}"
+            stmt.function = Function(stmt.location, qualName, tcParams, stmt.params.isVariadic, resultType, klass)
             allFunctions.add(stmt.function)
             val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
-            tcParams.forEach{ stmt.symbolTable.add(it) }
+            tcParams.forEach { stmt.symbolTable.add(it) }
             scope.add(sym)
+            if (klass!=null) {
+                klass.add(sym)
+                stmt.symbolTable.add(stmt.function.thisSymbol!!)
+            }
 
         } else if (stmt is AstClass) {
             val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
-            stmt.constructor = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, UnitType, stmt.klass)
+            stmt.constructor =
+                Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, UnitType, stmt.klass)
             stmt.klass.constructor = stmt.constructor
             allFunctions.add(stmt.constructor)
-            for((index,param) in tcParams.withIndex()) {
-                if (stmt.params.parameters[index].kind== TokenKind.EOL)
+            for ((index, param) in tcParams.withIndex()) {
+                if (stmt.params.parameters[index].kind == TokenKind.EOL)
                     stmt.symbolTable.add(param)
                 else {
-                    val field = FieldSymbol(param.location, param.name, param.type, (stmt.params.parameters[index].kind== TokenKind.VAR))
+                    val field = FieldSymbol(
+                        param.location,
+                        param.name,
+                        param.type,
+                        (stmt.params.parameters[index].kind == TokenKind.VAR)
+                    )
                     stmt.klass.add(field)
                     stmt.symbolTable.add(field)
                 }
             }
+            stmt.identifyFunctions(stmt.symbolTable, stmt.klass)
 
-        } else if (stmt is AstBlock) {
-            stmt.identifyFunctions(scope)
         }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -742,7 +770,7 @@ private fun AstClass.identifyFields() {
 
 fun AstTopLevel.typeCheck() : TastTopLevel {
     val ret = TastTopLevel(location, symbolTable)
-    identifyFunctions(symbolTable)
+    identifyFunctions(symbolTable, null)
 
     for(cls in statements.filterIsInstance<AstClass>())
         cls.identifyFields()

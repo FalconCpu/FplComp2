@@ -610,4 +610,45 @@ class TypeCheckingTest {
         """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun methodCalls() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+                fun greet() -> String
+                    return "meow"
+            
+            fun main()
+                var c = new Cat("Fluffy", 3)
+                c.greet()
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class Cat
+                Assign
+                  Member name (String)
+                    Variable this Cat
+                  Variable name String
+                Assign
+                  Member age (Int)
+                    Variable this Cat
+                  Variable age Int
+                Function Cat/greet
+                  Return
+                    StringLit "meow" String
+              Function main
+                Declare c Cat
+                  Constructor (Cat)
+                    StringLit "Fluffy" String
+                    IntLit 3 Int
+                ExpressionStatement
+                  FunctionCall (String)
+                    MethodLiteral Cat/greet ()->String
+                      Variable c Cat
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
 }

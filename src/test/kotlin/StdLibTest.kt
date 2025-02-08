@@ -128,7 +128,7 @@ class StdLibTest {
             Allocated int array at 1028
             Heap after allocations:
             00001000       20 TestObject
-            00001020       30 Array(10)
+            00001020       30 Array(10,4)
             00001050  3F7EFB0 FREE
 
             Heap after frees:

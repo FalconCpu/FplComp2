@@ -10,7 +10,7 @@ class Function(
     val parameters: List<VarSymbol>,
     val isVararg: Boolean,
     val returnType: Type,
-    methodOf : ClassType?
+    val methodOf : ClassType?
 ) {
     val prog = mutableListOf<Instr>()
     val vars = machineRegs.toMutableList<IRVal>()

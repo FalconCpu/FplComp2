@@ -136,6 +136,7 @@ class IRGenTest {
             LEA #0, "Hello, world!"
             MOV $1, #0
             CALL printString($1)
+            MOV #1, 0
             @0:
             RET []
 
@@ -281,6 +282,67 @@ class IRGenTest {
             @0:
             RET []
 
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
+    @Test
+    fun methodCalls() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+                fun greet() -> String
+                    return "meow"
+            
+            fun main()
+                var c = new Cat("Fluffy", 3)
+                c.greet()
+        """.trimIndent()
+
+        val expected = """
+            Function <TopLevel>:
+            START
+            RET []
+            
+            Function Cat:
+            START
+            MOV this, $1
+            MOV name, $2
+            MOV age, $3
+            ST4 name, this[name]
+            ST4 age, this[age]
+            @0:
+            RET []
+            
+            Function Cat/greet:
+            START
+            MOV this, $1
+            LEA #0, "meow"
+            MOV $8, #0
+            JMP @0
+            @0:
+            RET [$8]
+            
+            Function main:
+            START
+            LEA $1, CLASS(Cat)
+            CALL mallocObject($1)
+            MOV #0, $8
+            MOV #1, $8
+            LEA #2, "Fluffy"
+            MOV #3, 3
+            MOV $1, #1
+            MOV $2, #2
+            MOV $3, #3
+            CALL Cat($1, $2)
+            MOV #4, 0
+            MOV c, #1
+            MOV $1, c
+            CALL Cat/greet()
+            MOV #5, $8
+            @0:
+            RET []
+            
 
         """.trimIndent()
         runTest(input, expected)

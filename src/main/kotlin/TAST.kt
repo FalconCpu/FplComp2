@@ -20,6 +20,11 @@ sealed class Tast(val location: Location) {
                 expr?.dump(indent + 1, sb)
             }
 
+            is TastMethodLiteral -> {
+                sb.append("MethodLiteral $function $type\n")
+                thisExpr.dump(indent + 1, sb)
+            }
+
             is TastDeclareGlobalVar -> {
                 sb.append("Declare $symbol ${symbol.type}\n")
                 expr?.dump(indent + 1, sb)
@@ -112,6 +117,14 @@ sealed class Tast(val location: Location) {
                     arg.dump(indent + 1, sb)
             }
 
+            is TastMethodCall -> {
+                sb.append("MethodCall ($type)\n")
+                thisExpr.dump(indent + 1, sb)
+                func.dump(indent + 1, sb)
+                for (arg in args)
+                    arg.dump(indent + 1, sb)
+            }
+
             is TastFunctionLiteral -> {
                 sb.append("FunctionLiteral $function\n")
             }
@@ -189,6 +202,7 @@ class TastRealLiteral(location: Location, val value: Double) : TastExpression(lo
 class TastStringLiteral(location: Location, val value: String) : TastExpression(location, StringType)
 class TastCharLiteral(location: Location, val value: Char) : TastExpression(location, CharType)
 class TastFunctionLiteral(location: Location, val function: Function, type:Type) : TastExpression(location, type)
+class TastMethodLiteral(location: Location, val function: Function, val thisExpr: TastExpression, type:Type) : TastExpression(location, type)
 class TastVariable(location: Location, val symbol: VarSymbol, type: Type) : TastExpression(location, type)
 class TastGlobalVariable(location: Location, val symbol: GlobalVarSymbol, type: Type) : TastExpression(location, type)
 class TastBinaryOp(location: Location, val op: AluOp, val left: TastExpression, val right: TastExpression, type: Type) : TastExpression(location, type)
@@ -198,6 +212,7 @@ class TastOrOp(location: Location, val left: TastExpression, val right: TastExpr
 class TastCast(location: Location, val expr: TastExpression, type: Type) : TastExpression(location, type)
 class TastIndex(location: Location, val expr: TastExpression, val index: TastExpression, type:Type) : TastExpression(location, type)
 class TastFunctionCall(location: Location, val func: TastExpression, val args: List<TastExpression>, type:Type) : TastExpression(location, type)
+class TastMethodCall(location: Location, val func: TastExpression, val args: List<TastExpression>, val thisExpr:TastExpression, type:Type) : TastExpression(location, type)
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type) : TastExpression(location, type)
 class TastTypeDescriptor(location: Location, type:Type) : TastExpression(location,type)
 class TastConstructor(location: Location, val args:List<TastExpression>, val isLocal:Boolean, type:Type) : TastExpression(location,type)

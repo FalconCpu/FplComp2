@@ -7,6 +7,10 @@ sealed class Type(private val name:String) {
     fun isAssignableFrom(other: Type): Boolean {
         if (this==other || other == ErrorType || this==ErrorType || this== AnyType)
             return true
+        if (this is NullableType && other is NullType)
+            return true
+        if (this is NullableType && elementType.isAssignableFrom(other))
+            return true
         return false
     }
 
@@ -76,6 +80,7 @@ class  ArrayType(val elementType: Type) : Type("Array<$elementType>") {
 
 class  ClassType(name:String) : Type(name) {
     val fields = mutableListOf<FieldSymbol>()
+    val methods = mutableListOf<FunctionSymbol>()
     var classSize = 0
     lateinit var constructor : Function
 
@@ -83,6 +88,15 @@ class  ClassType(name:String) : Type(name) {
         field.offset = classSize
         classSize += field.type.getSize()
         fields += field
+    }
+
+    fun add(method: FunctionSymbol) {
+        methods += method
+    }
+
+    fun lookup(name: String): Symbol? {
+        return fields.find { it.name == name } ?:
+               methods.find { it.name == name }
     }
 
     companion object {

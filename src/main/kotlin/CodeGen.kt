@@ -46,13 +46,16 @@ fun TastExpression.codeGen() : IRVal {
             if (func is TastFunctionLiteral) {
                 val function = func.function
                 val numParams = function.parameters.size
-                val numRegs = codeGenFuncArgs(args, numParams, function.isVararg, null)
+                val funcThis = func.function.thisSymbol
+                val thisExpr = if (funcThis!=null) currentFunc.mapSymbol(funcThis) else null
+                val numRegs = codeGenFuncArgs(args, numParams, function.isVararg, thisExpr)
                 currentFunc.addCall(func.function, numRegs)
-                // Fetch the return value
-                if (function.returnType!= UnitType)
-                    currentFunc.addMov(machineRegs[8])
-                else
-                    machineRegs[0]
+            } else if (func is TastMethodLiteral) {
+                val function = func.function
+                val thisArg = func.thisExpr.codeGen()
+                val numParams = function.parameters.size
+                val numRegs = codeGenFuncArgs(args, numParams, function.isVararg, thisArg)
+                currentFunc.addCall(func.function, numRegs)
             } else {
                 TODO("Function expressions are not yet supported")
             }
@@ -102,7 +105,8 @@ fun TastExpression.codeGen() : IRVal {
         is TastFunctionLiteral -> TODO()
         is TastTypeDescriptor -> TODO()
         is TastNeg -> TODO()
-
+        is TastMethodCall -> TODO()
+        is TastMethodLiteral -> TODO()
     }
 }
 
@@ -232,7 +236,7 @@ fun TastStatement.codeGen() {
             lhs.codeGenLvalue(rhs)
         }
 
-        is TastFunction -> TODO()
+        is TastFunction -> {}
         is TastTopLevel -> TODO()
         is TastClass -> TODO()
 
@@ -383,6 +387,11 @@ fun TastClass.codeGen() {
     currentFunc.addLabel( currentFunc.retLabel)
     val retval = if (currentFunc.retVal==null) emptyList() else listOf(currentFunc.retVal!!)
     currentFunc.add( InstrRet(retval) )
+
+    // Generate code for all methods
+    for (statement in statements.filterIsInstance<TastFunction>())
+        statement.codeGen()
+
 }
 
 // ---------------------------------------------------------------------------
