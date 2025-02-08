@@ -167,6 +167,14 @@ sealed class AstNode (val location:Location) {
                     stmt.dump(indent+1, sb)
             }
 
+            is AstForArray -> {
+                sb.append("ForArray\n")
+                id.dump(indent+1, sb)
+                expr.dump(indent+1, sb)
+                for(stmt in statements)
+                    stmt.dump(indent+1, sb)
+            }
+
             is AstIfClause -> {
                 sb.append("IfClause\n")
                 expr?.dump(indent+1, sb)
@@ -296,6 +304,8 @@ class AstClass(location: Location, val name:String, val params: AstParameterList
 class AstWhile(location: Location, val expr: AstExpression, parent:AstBlock) : AstBlock(location, parent)
 class AstRepeat(location: Location, parent:AstBlock) : AstBlock(location, parent) {lateinit var expr: AstExpression}
 class AstForRange(location: Location, val id: AstIdentifier, val from: AstExpression, val to: AstExpression, val comparator: TokenKind, parent:AstBlock)
+    : AstBlock(location, parent)
+class AstForArray(location: Location, val id: AstIdentifier, val expr: AstExpression, parent:AstBlock)
     : AstBlock(location, parent)
 class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock) : AstBlock(location, parent) {
     lateinit var pathContextOut : PathContext

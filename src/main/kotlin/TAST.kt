@@ -142,6 +142,13 @@ sealed class Tast(val location: Location) {
                     stmt.dump(indent + 1, sb)
             }
 
+            is TastForArray -> {
+                sb.append("ForArray $sym\n")
+                array.dump(indent + 1, sb)
+                for (stmt in statements)
+                    stmt.dump(indent + 1, sb)
+            }
+
             is TastMember -> {
                 sb.append("Member $member ($type)\n")
                 expr.dump(indent + 1, sb)
@@ -269,6 +276,9 @@ class TastRepeat(location: Location, val expr: TastExpression, symbolTable: Symb
     : TastBlock(location, symbolTable)
 
 class TastForRange(location: Location, val sym: VarSymbol, val from: TastExpression, val to: TastExpression, val comparator: TokenKind, symbolTable: SymbolTable)
+    : TastBlock(location, symbolTable)
+
+class TastForArray(location: Location, val sym: VarSymbol, val array: TastExpression, symbolTable: SymbolTable)
     : TastBlock(location, symbolTable)
 
 class TastFunction(location: Location, symbolTable: SymbolTable, val function: Function)

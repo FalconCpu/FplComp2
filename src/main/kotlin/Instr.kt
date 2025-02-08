@@ -173,7 +173,6 @@ enum class AluOp {
     LTR,
     LER,
 
-    ADDS,
     EQS,
     NES,
     GTS,
@@ -221,7 +220,6 @@ enum class AluOp {
         GER -> TODO()
         LTR -> TODO()
         LER -> TODO()
-        ADDS -> TODO()
         EQS -> TODO()
         NES -> TODO()
         GTS -> TODO()

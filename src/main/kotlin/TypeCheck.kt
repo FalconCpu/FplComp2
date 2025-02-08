@@ -90,8 +90,6 @@ private val binopTable = listOf(
     Binop(TokenKind.SLASH,     RealType, RealType, AluOp.DIVR, RealType),
     Binop(TokenKind.PERCENT,   RealType, RealType, AluOp.MODR, RealType),
 
-    Binop(TokenKind.PLUS,      StringType, StringType, AluOp.ADDS, StringType),
-
     Binop(TokenKind.AND,       BoolType, BoolType, AluOp.ANDB,  BoolType),
     Binop(TokenKind.OR,        BoolType, BoolType, AluOp.ORB,  BoolType)
     )
@@ -612,6 +610,23 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val sym = VarSymbol(id.location, id.name, IntType, false)
             symbolTable.add(sym)
             val ret = TastForRange(location, sym, from, to, comparator, symbolTable)
+            for (stmt in statements)
+                ret.add(stmt.typeCheck(ret.symbolTable))
+            ret
+        }
+
+        is AstForArray -> {
+            val array = expr.typeCheck(scope)
+            val elementType = when(array.type) {
+                is ArrayType -> array.type.elementType
+                is String -> CharType
+                is ErrorType -> ErrorType
+                else -> makeErrorType(array.location, "Got type '${array.type}' when expecting array")
+            }
+
+            val sym = VarSymbol(id.location, id.name, elementType, false)
+            symbolTable.add(sym)
+            val ret = TastForArray(location, sym, array, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
             ret

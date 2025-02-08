@@ -311,6 +311,28 @@ fun TastStatement.codeGen() {
             currentFunc.addLabel(labelEnd)
         }
 
+        is TastForArray -> {
+            val labelStart = currentFunc.newLabel()
+            val labelCond = currentFunc.newLabel()
+            val labelEnd = currentFunc.newLabel()
+            val sym = currentFunc.mapSymbol(this.sym)
+            val ptr = currentFunc.addMov( array.codeGen() )
+            val length = currentFunc.addLoadField(4, ptr, lengthSymbol)
+            val elementSize = this.sym.type.getSize()
+            val lengthScaled = currentFunc.addAlu(AluOp.MULI, length, elementSize)
+            val endPtr = currentFunc.addAlu(AluOp.ADDI, ptr, lengthScaled)
+
+            currentFunc.addJump(labelCond)
+            currentFunc.addLabel(labelStart)
+            currentFunc.add( InstrLoad(elementSize, sym, ptr, 0) )
+            currentFunc.add( InstrAlui(ptr, AluOp.ADDI, ptr, elementSize) )
+            for (stmt in statements)
+                stmt.codeGen()
+            currentFunc.addLabel(labelCond)
+            currentFunc.addBranch(AluOp.NEI, ptr, endPtr, labelStart)
+            currentFunc.addLabel(labelEnd)
+        }
+
         is TastIf -> {
             val labelEnd = currentFunc.newLabel()
             // Generate the code for the conditions

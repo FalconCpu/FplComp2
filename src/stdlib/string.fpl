@@ -1,0 +1,26 @@
+# #######################################################################
+# String management routines
+# #######################################################################
+
+fun newString(strings:String...) -> String
+    # Calculate the total length of the resulting string.
+    var totalLength = 0
+    for s in strings
+        totalLength = totalLength + s.length
+
+    # Allocate a new Array<Char> to hold the concatenated characters.
+    # (Assume that Array<Char> is the internal representation of a String.)
+    var result = new Array<Char>(totalLength)
+    var pos = 0
+
+    # Copy characters from each input string into the result array.
+    for s in strings
+        for i in 0 to < s.length
+            result[pos] = s[i]
+            pos = pos + 1
+
+    # Return the newly constructed string.
+    return (result:String)
+
+
+

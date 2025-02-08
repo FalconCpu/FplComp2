@@ -439,11 +439,15 @@ class Parser(private val lexer: Lexer) {
         val id = parseIdentifier()
         expect(IN)
         val from = parseExpression()
-        expect(TO)
-        val comparator = if (lookahead.kind in listOf(LT,LE,GT,GE)) nextToken().kind else LE
-        val to = parseExpression()
-        expectEol()
-        val ret = AstForRange(id.location, id, from, to, comparator, block)
+        val ret = if (canTake(TO)) {
+            val comparator = if (lookahead.kind in listOf(LT, LE, GT, GE)) nextToken().kind else LE
+            val to = parseExpression()
+            expectEol()
+            AstForRange(id.location, id, from, to, comparator, block)
+        } else {
+            expectEol()
+            AstForArray(id.location, id, from, block)
+        }
         block.add(ret)
         if (lookahead.kind==INDENT)
             parseIndentedBlock(ret)

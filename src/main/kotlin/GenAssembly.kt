@@ -48,7 +48,6 @@ private fun InstrAlu.genAssembly() : String = when(op) {
     AluOp.GTR -> TODO()
     AluOp.LER -> TODO()
     AluOp.GER -> TODO()
-    AluOp.ADDS -> TODO()
     AluOp.EQS,
     AluOp.NES,
     AluOp.LTS,
@@ -89,7 +88,6 @@ private fun InstrAlui.genAssembly() : String = when(op) {
     AluOp.GTR -> TODO()
     AluOp.LER -> TODO()
     AluOp.GER -> TODO()
-    AluOp.ADDS -> TODO()
     AluOp.EQS,
     AluOp.NES,
     AluOp.LTS,

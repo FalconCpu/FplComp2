@@ -5,7 +5,7 @@ import java.io.FileReader
 import java.io.StringReader
 
 class StdLibTest {
-    val stdLibFiles = listOf("memory.fpl", "print.fpl")
+    val stdLibFiles = listOf("memory.fpl", "string.fpl", "print.fpl")
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
 
     private fun runTest(input: String, expected: String) {
@@ -180,4 +180,55 @@ class StdLibTest {
 
         runTest(prog,expected)
     }
+
+
+    @Test
+    fun forLoopArrayTest() {
+        val prog = """
+            fun main()
+                # Allocate an array of 5 integers.
+                var arr = new Array<Int>(5)
+                
+                # Initialize the array elements.
+                arr[0] = 10
+                arr[1] = 20
+                arr[2] = 30
+                arr[3] = 40
+                arr[4] = 50
+
+                # Use the for-each loop to iterate over the array.
+                for x in arr
+                    printf("%d ", x)
+                
+                # Print a newline after the loop.
+                printf("\n")
+
+        """.trimIndent()
+
+        val expected = """
+            10 20 30 40 50 
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun newStringTest() {
+        val prog = """
+            fun main()
+                # Concatenate several strings together.
+                var s = newString("Hello", ", ", "world", "!")
+                
+                # Print the resulting concatenated string.
+                printf("Concatenated string: %s\n", s)
+
+        """.trimIndent()
+
+        val expected = """
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
 }

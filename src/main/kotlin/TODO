@@ -13,18 +13,26 @@ Done:
    stdlib: malloc
    local allocations of objects
    constructors calls in codegen
+   method calls
+   delete operator
+
 
 ShortTerm:
-   delete operator
-   method calls
    when statement
    string comparison ops
+   string concatenation
    += -= etc
-   not operator in if/else
+   not operator
+   named constants
+   enum
+   for loop iterators
 
 Longer Term:
+   List<>
+   lambdas
    change malloc to freelist
    inheritance
+   virtual methods
    'is' tests
    abstract class
    generics?
