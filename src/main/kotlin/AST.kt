@@ -56,6 +56,13 @@ sealed class AstNode (val location:Location) {
                 expr?.dump(indent+1, sb)
             }
 
+            is AstDeclareGlobalVar -> {
+                sb.append("Global $decl\n")
+                id.dump(indent+1, sb)
+                type?.dump(indent+1, sb)
+                expr?.dump(indent+1, sb)
+            }
+
             is AstDeclareField-> {
                 sb.append("DeclareField $decl\n")
                 id.dump(indent+1, sb)
@@ -246,6 +253,8 @@ class AstTypeNullable(location: Location, val expr:AstType, val nullable: Boolea
 
 // Statement classes
 class AstDeclareVar(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)
+    : AstStatement(location)
+class AstDeclareGlobalVar(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)
     : AstStatement(location)
 
 class AstDeclareField(location: Location, val decl:TokenKind, val id: AstIdentifier, val type: AstType?, val expr: AstExpression?)

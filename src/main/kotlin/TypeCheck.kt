@@ -36,6 +36,7 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
                 is VarSymbol -> makeErrorType(location, "Type '$name' is a variable not a type")
                 is UndefinedSymbol -> error("Undefined symbol")
                 is ConstantSymbol -> makeErrorType(location, "Type '$name' is a constant not a type")
+                is GlobalVarSymbol -> makeErrorType(location, "Type '$name' is a global variable not a type")
             }
         }
 
@@ -154,6 +155,8 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                     if (allowRefinedType) pathContext.getType(sym) else sym.type)
                 is UndefinedSymbol -> error("Got undefined symbol in type checking")
                 is ConstantSymbol -> TastIntLiteral(location, sym.value, sym.type)
+                is GlobalVarSymbol -> TastGlobalVariable(location, sym,
+                    if (allowRefinedType) pathContext.getType(sym) else sym.type)
             }
         }
 
@@ -166,7 +169,7 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             val binop = compOpTable.firstOrNull { it.op == op && it.left == lhs.type && it.right == rhs.type }
             if(binop==null)
                 return TastError(location,"No operation '${op.text}' for types ${lhs.type} and ${rhs.type}")
-            TastBinaryOp(location, binop.aluOp, lhs, rhs, binop.resultType)
+            TastCompareOp(location, binop.aluOp, lhs, rhs, binop.resultType)
         }
 
         is AstEqualsOp -> {
@@ -321,6 +324,12 @@ fun AstExpression.typeCheckLvalue(scope:SymbolTable) : TastExpression {
                 Log.error(location, "Variable '${ret.symbol}' is not mutable")
         }
 
+        is TastGlobalVariable -> {
+            if (!ret.symbol.mutable && (ret.symbol !in pathContext.uninitialized))
+                Log.error(location, "Variable '${ret.symbol}' is not mutable")
+        }
+
+
         is  TastIndex -> {}
 
         is TastMember -> {
@@ -402,7 +411,7 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             val lhs = left.typeCheckBool(scope)
             val pathContext1 = pathContextFalse
             pathContext = pathContextTrue
-            val rhs = right.typeCheckRvalue(scope)
+            val rhs = right.typeCheckBool(scope)
             pathContextFalse = listOf(pathContextFalse, pathContext1).merge()
             TastAndOp(location, lhs, rhs, BoolType)
         }
@@ -411,7 +420,7 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             val lhs = left.typeCheckBool(scope)
             val pathContext1 = pathContextTrue
             pathContext = pathContextFalse
-            val rhs = right.typeCheckRvalue(scope)
+            val rhs = right.typeCheckBool(scope)
             pathContextTrue = listOf(pathContextTrue, pathContext1).merge()
             TastOrOp(location, lhs, rhs, BoolType)
         }
@@ -542,6 +551,22 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             TastDeclareVar(this.location, sym, tcExpr)
         }
 
+        is AstDeclareGlobalVar -> {
+            val tcExpr = expr?.typeCheck(scope)
+            val tcType = type?.resolveType(scope) ?: tcExpr?.type ?:
+            makeErrorType(id.location,"Cannot determine type for '$id'")
+            val mutable = this.decl == TokenKind.VAR
+            val offset = DataSegment.globalVariables.size*4
+            val sym = GlobalVarSymbol(this.id.location, this.id.name, tcType, mutable, offset)
+            DataSegment.globalVariables += sym
+            if (tcExpr==null)
+                pathContext = pathContext.addUninitialized(sym)
+            scope.add(sym)
+            tcExpr?.checkType(sym.type)
+            TastDeclareGlobalVar(this.location, sym, tcExpr)
+        }
+
+
         is AstDeclareField -> {
             TastDeclareField(location, symbol, tcExpr)
         }
@@ -655,6 +680,7 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
             val resultType = stmt.retType?.resolveType(scope) ?: UnitType
             val functionType = FunctionType.make(tcParams.map { it.type }, stmt.params.isVariadic, resultType)
             stmt.function = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, resultType, null)
+            allFunctions.add(stmt.function)
             val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
             tcParams.forEach{ stmt.symbolTable.add(it) }
             scope.add(sym)
@@ -663,6 +689,7 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
             val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
             stmt.constructor = Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, UnitType, stmt.klass)
             stmt.klass.constructor = stmt.constructor
+            allFunctions.add(stmt.constructor)
             for((index,param) in tcParams.withIndex()) {
                 if (stmt.params.parameters[index].kind== TokenKind.EOL)
                     stmt.symbolTable.add(param)
@@ -684,7 +711,7 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable) {
 // Before the main type checking, we do a pass through the AST to identify all fields
 // and their types
 
-private fun AstClass.identifyFields(scope:SymbolTable) {
+private fun AstClass.identifyFields() {
 //    for (param in params) {
 //        val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
 //        scope.add(sym)
@@ -692,15 +719,15 @@ private fun AstClass.identifyFields(scope:SymbolTable) {
 
     for (stmt in statements) {
         if (stmt is AstDeclareField) {
-            val tcExpr = stmt.expr?.typeCheck(scope)
+            val tcExpr = stmt.expr?.typeCheck(symbolTable)
 
-            val type = stmt.type?.resolveType(scope) ?:
+            val type = stmt.type?.resolveType(symbolTable) ?:
                        tcExpr?.type ?:
                        makeErrorType(stmt.id.location,"Cannot determine type for '${stmt.id.name}'")
 
             val sym = FieldSymbol(stmt.id.location, stmt.id.name, type, stmt.decl== TokenKind.VAR)
             tcExpr?.checkType(sym.type)
-            scope.add(sym)
+            symbolTable.add(sym)
             klass.add(sym)
             stmt.symbol = sym
             stmt.tcExpr = tcExpr
@@ -718,7 +745,7 @@ fun AstTopLevel.typeCheck() : TastTopLevel {
     identifyFunctions(symbolTable)
 
     for(cls in statements.filterIsInstance<AstClass>())
-        cls.identifyFields(symbolTable)
+        cls.identifyFields()
 
     currentFunction = ret.function
     pathContext = PathContext()

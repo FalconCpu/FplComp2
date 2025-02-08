@@ -231,7 +231,7 @@ class PathContextTest {
                       Compare NEI Bool
                         Variable a Cat?
                         IntLit 0 Null
-                      Binop GTI Bool
+                      Compare GTI Bool
                         Member age (Int)
                           Variable a Cat
                         IntLit 4 Int

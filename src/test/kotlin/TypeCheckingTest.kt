@@ -77,7 +77,7 @@ class TypeCheckingTest {
                   Variable a Int
                   IntLit 1 Int
               Declare c Bool
-                Binop LTI Bool
+                Compare LTI Bool
                   Variable a Int
                   Variable b Int
               Declare d Real

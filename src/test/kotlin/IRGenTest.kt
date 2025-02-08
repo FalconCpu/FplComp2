@@ -13,12 +13,17 @@ class IRGenTest {
     @Test
     fun simpleDeclaration() {
         val input = """
-            val a = 0x12
-            var b = a*3+1
+            fun main()
+                val a = 0x12
+                var b = a*3+1
         """.trimIndent()
 
         val expected = """
             Function <TopLevel>:
+            START
+            RET []
+
+            Function main:
             START
             MOV #0, 18
             MOV a, #0
@@ -27,6 +32,7 @@ class IRGenTest {
             MOV #3, 1
             ADDI #4, #2, #3
             MOV b, #4
+            @0:
             RET []
 
 
@@ -233,6 +239,52 @@ class IRGenTest {
         runTest(input, expected)
     }
 
+
+    @Test
+    fun globalVarTest() {
+        val input = """
+            var count = 0
+            var fred = 0
+            fun foo() 
+                while count<10
+                    count = count + 1
+                fred = count * 2
+        """.trimIndent()
+
+        val expected = """
+            Function <TopLevel>:
+            START
+            MOV #0, 0
+            ST4 #0, GLOBAL[count]
+            MOV #1, 0
+            ST4 #1, GLOBAL[fred]
+            RET []
+
+            Function foo:
+            START
+            JMP @2
+            @1:
+            LD4 #0, GLOBAL[count]
+            MOV #1, 1
+            ADDI #2, #0, #1
+            ST4 #2, GLOBAL[count]
+            @2:
+            LD4 #3, GLOBAL[count]
+            MOV #4, 10
+            BLTI #3, #4, @1
+            JMP @3
+            @3:
+            LD4 #5, GLOBAL[count]
+            MOV #6, 2
+            MULI #7, #5, #6
+            ST4 #7, GLOBAL[fred]
+            @0:
+            RET []
+
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
 
 
 }

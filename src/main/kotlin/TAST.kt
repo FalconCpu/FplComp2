@@ -14,7 +14,13 @@ sealed class Tast(val location: Location) {
             is TastRealLiteral -> sb.append("RealLit $value $type\n")
             is TastStringLiteral -> sb.append("StringLit \"$value\" $type\n")
             is TastVariable -> sb.append("Variable $symbol $type\n")
+            is TastGlobalVariable -> sb.append("Variable $symbol $type\n")
             is TastDeclareVar -> {
+                sb.append("Declare $symbol ${symbol.type}\n")
+                expr?.dump(indent + 1, sb)
+            }
+
+            is TastDeclareGlobalVar -> {
                 sb.append("Declare $symbol ${symbol.type}\n")
                 expr?.dump(indent + 1, sb)
             }
@@ -184,6 +190,7 @@ class TastStringLiteral(location: Location, val value: String) : TastExpression(
 class TastCharLiteral(location: Location, val value: Char) : TastExpression(location, CharType)
 class TastFunctionLiteral(location: Location, val function: Function, type:Type) : TastExpression(location, type)
 class TastVariable(location: Location, val symbol: VarSymbol, type: Type) : TastExpression(location, type)
+class TastGlobalVariable(location: Location, val symbol: GlobalVarSymbol, type: Type) : TastExpression(location, type)
 class TastBinaryOp(location: Location, val op: AluOp, val left: TastExpression, val right: TastExpression, type: Type) : TastExpression(location, type)
 class TastCompareOp(location: Location, val op: AluOp, val left: TastExpression, val right: TastExpression, type: Type) : TastExpression(location, type)
 class TastAndOp(location: Location, val left: TastExpression, val right: TastExpression, type: Type) : TastExpression(location, type)
@@ -207,6 +214,7 @@ class TastError(location: Location, message: String) : TastExpression(location, 
 // Statements
 sealed class TastStatement(location: Location) : Tast(location)
 class TastDeclareVar(location: Location, val symbol:VarSymbol, val expr: TastExpression?) : TastStatement(location)
+class TastDeclareGlobalVar(location: Location, val symbol: GlobalVarSymbol, val expr: TastExpression?) : TastStatement(location)
 class TastAssign(location: Location, val lhs: TastExpression, val rhs: TastExpression) : TastStatement(location)
 class TastExpressionStatement(location: Location, val expr: TastExpression) : TastStatement(location)
 class TastReturn(location: Location, val expr: TastExpression?) : TastStatement(location)
@@ -225,6 +233,8 @@ sealed class TastBlock(location: Location, val symbolTable: SymbolTable) : TastS
 
 class TastTopLevel(location: Location, symbolTable: SymbolTable) : TastBlock(location, symbolTable) {
     val function = Function(Location.nullLocation, "<TopLevel>", emptyList(), false, UnitType, null)
+        .also{allFunctions.add(it)}
+
     fun dump(): String {
         val sb = StringBuilder()
         dump(0, sb)

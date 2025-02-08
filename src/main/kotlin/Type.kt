@@ -86,10 +86,9 @@ class  ClassType(name:String) : Type(name) {
     }
 
     companion object {
-        private val allStructTypes = mutableListOf<ClassType>()
         fun make(name: String): ClassType {
             val new = ClassType(name)
-            allStructTypes.add(new)
+            DataSegment.allClasses.add(new)
             return new
         }
     }

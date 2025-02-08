@@ -16,14 +16,17 @@ sealed class Instr() {
         is InstrJump -> "JMP $label"
         is InstrLabel -> "$label:"
         is InstrLoad -> "LD$size $dest, $addr[$offset]"
-        is InstrLoadField -> "LD$size $dest, $addr[$offset]"
         is InstrStore -> "ST$size $data, $addr[$offset]"
         is InstrMov -> "MOV $dest, $src"
         is InstrMovi -> "MOV $dest, $value"
         is InstrRet -> "RET $retval"
         is InstrStart -> "START"
         is InstrLea -> "LEA $dest, \"$data\""
+        is InstrLoadField -> "LD$size $dest, $addr[$offset]"
         is InstrStoreField -> "ST$size $data, $addr[$offset]"
+        is InstrLoadGlobal -> "LD$size $dest, GLOBAL[$offset]"
+        is InstrStoreGlobal -> "ST$size $data, GLOBAL[$offset]"
+        is InstrClassRef -> "LEA $dest, CLASS($data)"
     }
 
     fun getReads() : List<IRVal> = when(this) {
@@ -35,14 +38,17 @@ sealed class Instr() {
         is InstrJump -> emptyList()
         is InstrLabel -> emptyList()
         is InstrLoad -> listOf(addr)
-        is InstrLoadField -> listOf(addr)
         is InstrStore -> listOf(data,addr)
         is InstrMov -> listOf(src)
         is InstrMovi -> emptyList()
         is InstrRet -> retval
         is InstrStart -> emptyList()
         is InstrLea -> emptyList()
+        is InstrClassRef -> emptyList()
+        is InstrLoadField -> listOf(addr)
         is InstrStoreField -> listOf(data,addr)
+        is InstrLoadGlobal -> emptyList()
+        is InstrStoreGlobal -> listOf(data)
     }
 
     fun getWrites() : IRVal? = when(this) {
@@ -62,6 +68,9 @@ sealed class Instr() {
         is InstrStart -> null
         is InstrLea -> dest
         is InstrStoreField -> null
+        is InstrLoadGlobal -> dest
+        is InstrStoreGlobal -> null
+        is InstrClassRef -> dest
     }
 }
 
@@ -80,7 +89,10 @@ class InstrStore(val size:Int, val data:IRVal, val addr:IRVal, val offset: Int) 
 class InstrLoad(val size:Int, val dest:IRVal, val addr:IRVal, val offset: Int) : Instr()
 class InstrLoadField(val size:Int, val dest:IRVal, val addr:IRVal, val offset: FieldSymbol) : Instr()
 class InstrStoreField(val size:Int, val data:IRVal, val addr:IRVal, val offset: FieldSymbol) : Instr()
+class InstrLoadGlobal(val size:Int, val dest:IRVal, val offset: GlobalVarSymbol) : Instr()
+class InstrStoreGlobal(val size:Int, val data:IRVal, val offset: GlobalVarSymbol) : Instr()
 class InstrLea(val dest:IRVal, val data:String) : Instr()
+class InstrClassRef(val dest:IRVal, val data:ClassType) : Instr()
 
 sealed class IRVal(val name:String) {
     var index = 0

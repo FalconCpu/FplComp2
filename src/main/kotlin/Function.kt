@@ -25,10 +25,6 @@ class Function(
     val regAssignmentComments = mutableListOf<String>()
     private val stackAllocations = mutableListOf<StackAlloc>()
 
-    init {
-        allFunctions.add(this)
-    }
-
     override fun toString() = name
 
     fun add(instr: Instr) {
@@ -113,7 +109,8 @@ class Function(
     fun addCall(func:Function, args:List<IRVal>) : IRVal {
         val ret = newTemp()
         add(InstrCall(func, args))
-        return ret // TODO: return value
+        addMov(ret, if (func.returnType == UnitType) machineRegs[0] else machineRegs[8])
+        return ret
     }
 
     fun addLea(string:String) : IRVal {

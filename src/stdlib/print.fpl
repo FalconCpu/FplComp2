@@ -13,14 +13,39 @@ fun printChar(c:Char)
         val a = 0  # dummy instruction
     hwregs.uartTx = (c : Int)
 
-fun printString(string:String)
-   for i in 0 to< string.length
-        printChar(string[i])
+fun printBufferReversed(buf:Array<Char>, len:Int, width:Int, pad:Int)
+    # print a buffer of chars, with a given width and padding
+    # width = 0 means no padding
+    # pad : 0 = pad left space, 1 = pad left zeros, 2 = pad right spaces
+    val hwregs = (0xE0000000:HwRegs)
+    if len<width and pad!=2
+       for i in len to <width
+            if pad = 0
+                printChar(' ')
+            else
+                printChar('0')
+    for i in len-1 to >=0
+        printChar(buf[i])
+    if len<width and pad=2
+        for i in len to <width
+            printChar(' ')
 
-fun printInt(n:Int)
+fun printString(string:String, width:Int, pad:Int)
+    val len = string.length
+    if len<width and pad!=2
+       for i in len to <width
+            printChar(' ')
+    for i in 0 to< len
+        printChar(string[i])
+    if len<width and pad=2
+        for i in len to <width
+            printChar(' ')
+
+fun printInt(n:Int, width:Int, pad:Int)
     var number = n
+    var negative = false
     if (n<0)
-        printChar('-')
+        negative = true
         number = -number
     val buffer = local Array<Char>(10)
     var index = 0
@@ -30,44 +55,67 @@ fun printInt(n:Int)
         buffer[index] = (digit + '0' : Char)
         index = index + 1
     until number = 0
-    for i in index-1 to >= 0
-        printChar(buffer[i])
+    if negative
+        buffer[index] = '-'
+        index = index + 1
+    printBufferReversed(buffer, index, width, pad)
 
 
-fun printHex(number:Int)
+fun printHex(number:Int, width:Int, pad:Int)
     var n = number
-    for i in 0 to 7
-        val digit = n lsr 28
+    val buffer = local Array<Char>(10)
+    var index = 0
+    repeat
+        val digit = n & 15
         if (digit<=9)
-            printChar((digit + '0' : Char))
+            buffer[index] = (digit + '0' : Char)
         else
-            printChar((digit - 10 + 'A' : Char))
-        n = n lsl 4
+            buffer[index] = (digit - 10 + 'A' : Char)
+        index = index + 1
+        n = n lsr 4
+    until n=0
+    printBufferReversed(buffer, index, width, pad)
 
 fun printf(format:String, args:Any...)
     var argIndex = 0
-    var charIndex = 0
-    while charIndex < format.length
-        if format[charIndex] = '%'
-            charIndex = charIndex + 1
-            if charIndex >= format.length
-                return
-            elsif format[charIndex] = 'x'
-                printHex((args[argIndex] : Int))
+    var inPercent = false
+    var pad = 0   # 0=pad left space, 1=pad left zeros, 2=pad right spaces
+    var width = 0
+    for charIndex in 0 to <format.length
+        val c = format[charIndex]
+        if inPercent
+            if c='-'
+                pad=2
+            elsif c='0' and width=0
+                pad=1
+            elsif c>='0' and c<='9'
+                width = width * 10 + c - '0'
+            elsif c = 'x'
+                printHex((args[argIndex] : Int), width, pad)
                 argIndex = argIndex + 1
-            elsif format[charIndex] = 's'
-                printString((args[argIndex] : String))
+                inPercent = false
+            elsif c = 's'
+                printString((args[argIndex] : String), width, pad)
                 argIndex = argIndex + 1
-            elsif format[charIndex] = 'c'
+                inPercent = false
+            elsif c = 'c'
                 printChar((args[argIndex] : Char))
                 argIndex = argIndex + 1
-            elsif format[charIndex] = 'd'
-                printInt((args[argIndex] : Int))
+                inPercent = false
+            elsif c = 'd'
+                printInt((args[argIndex] : Int), width, pad)
                 argIndex = argIndex + 1
+                inPercent = false
             else
                 printChar(format[charIndex])
+                inPercent = false
         else
-            printChar(format[charIndex])
-        charIndex = charIndex + 1
-    end while
-
+            pad = 0
+            width = 0
+            if c='%'
+                inPercent = true
+            else
+                printChar(c)
+        end if
+    end for
+end fun

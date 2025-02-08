@@ -295,6 +295,16 @@ class Parser(private val lexer: Lexer) {
         block.add(AstDeclareVar(tok.location, tok.kind, id, optType, optInit))
     }
 
+    private fun parseGlobalVarDecl(block:AstBlock) {
+        val tok = nextToken()
+        val id = parseIdentifier()
+        val optType = parseOptType()
+        val optInit = parseOptInitializer()
+        expectEol()
+        block.add(AstDeclareGlobalVar(tok.location, tok.kind, id, optType, optInit))
+    }
+
+
     private fun parseFieldDecl(block:AstBlock) {
         val tok = nextToken()
         val id = parseIdentifier()
@@ -551,8 +561,8 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseTopStatement(block:AstBlock) {
         when (lookahead.kind) {
-            VAR -> parseVarDecl(block)
-            VAL -> parseVarDecl(block)
+            VAR -> parseGlobalVarDecl(block)
+            VAL -> parseGlobalVarDecl(block)
             FUN -> parseFunction(block)
             CLASS -> parseClass(block)
             WHILE -> throw ParseError(lookahead.location, "While statements are not allowed at top level")

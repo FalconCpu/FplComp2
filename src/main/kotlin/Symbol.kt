@@ -6,6 +6,7 @@ sealed class Symbol(val location: Location, val name:String, val type: Type) {
 
 class ConstantSymbol(location: Location, name: String, type: Type, val value: Int) : Symbol(location, name, type)
 class VarSymbol(location: Location, name: String, type: Type, val mutable:Boolean) : Symbol(location, name, type)
+class GlobalVarSymbol(location: Location, name: String, type: Type, val mutable:Boolean, val offset:Int) : Symbol(location, name, type)
 class FunctionSymbol(location: Location, name: String, type: FunctionType, val function: Function) : Symbol(location, name, type)
 class TypeSymbol(location: Location, name: String, type: Type) : Symbol(location, name, type)
 object UndefinedSymbol : Symbol(Location.nullLocation, "<undefined>", UndefinedType)

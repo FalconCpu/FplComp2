@@ -9,18 +9,21 @@ Done:
    constructor calls
    repeat until
    compile time evaluation of constants
+   stdlib: printf width specifiers
+   stdlib: malloc
+   local allocations of objects
+   constructors calls in codegen
 
 ShortTerm:
-   stdlib: malloc
-   constructors calls in codegen
+   delete operator
+   method calls
    when statement
    string comparison ops
-   stdlib: printf width specifiers
-   local allocations of objects
    += -= etc
    not operator in if/else
 
 Longer Term:
+   change malloc to freelist
    inheritance
    'is' tests
    abstract class

@@ -19,10 +19,10 @@ class ParserTest {
 
         val expected = """
             TopLevel
-              Declare VAL
+              Global VAL
                 Identifier a
                 IntLit 18
-              Declare VAR
+              Global VAR
                 Identifier b
                 StringLit hello world
 
@@ -40,11 +40,11 @@ class ParserTest {
 
         val expected = """
             TopLevel
-              Declare VAL
+              Global VAL
                 Identifier a
                 TypeIdentifier Int
                 IntLit 1
-              Declare VAR
+              Global VAR
                 Identifier b
                 TypeIdentifier String
                 StringLit hello world
@@ -63,10 +63,10 @@ class ParserTest {
 
         val expected = """
             TopLevel
-              Declare VAL
+              Global VAL
                 Identifier a
                 TypeIdentifier Int
-              Declare VAR
+              Global VAR
                 Identifier b
                 TypeIdentifier Real
 

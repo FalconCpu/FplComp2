@@ -28,6 +28,12 @@ fun TastExpression.codeGen() : IRVal {
             currentFunc.addMov(value)
         }
 
+        is TastGlobalVariable -> {
+            val ret = currentFunc.newTemp()
+            currentFunc.add(InstrLoadGlobal(type.getSize(), ret, symbol))
+            ret
+        }
+
         is TastIndex -> {
             val expr = expr.codeGen()
             val index = index.codeGen()
@@ -40,7 +46,7 @@ fun TastExpression.codeGen() : IRVal {
             if (func is TastFunctionLiteral) {
                 val function = func.function
                 val numParams = function.parameters.size
-                val numRegs = codeGenFuncArgs(args, numParams, function.isVararg)
+                val numRegs = codeGenFuncArgs(args, numParams, function.isVararg, null)
                 currentFunc.addCall(func.function, numRegs)
                 // Fetch the return value
                 if (function.returnType!= UnitType)
@@ -60,21 +66,41 @@ fun TastExpression.codeGen() : IRVal {
         is TastNewArray -> {
             if (isLocal) {
                 val numElements = size.getCompileTimeConstant()
-                val size = 4 + numElements * (type as ArrayType).getSize()
+                val size = 4 + numElements * (type as ArrayType).elementType.getSize()
                 val alloc = currentFunc.stackAlloc(size)
                 val numElementsIRval = currentFunc.addMov(numElements)
                 val ret = currentFunc.addAlu(AluOp.ADDI, machineRegs[31], alloc.startAddress+4)
                 currentFunc.addStoreField(4,numElementsIRval, ret, lengthSymbol)
                 return ret
             } else {
-                TODO("new array")
+                val numElements = size.codeGen()
+                val size = currentFunc.addMov( (type as ArrayType).elementType.getSize() )
+                currentFunc.addMov( machineRegs[1], numElements)
+                currentFunc.addMov( machineRegs[2], size)
+                return currentFunc.addCall(Stdlib.mallocArray, listOf(machineRegs[1], machineRegs[2]))
             }
-            TODO()
         }
+
+        is TastConstructor -> {
+            val ret : IRVal
+            val klass = (type as ClassType)
+            if (isLocal) {
+                val size = klass.classSize + 4
+                val alloc = currentFunc.stackAlloc(size)
+                ret = currentFunc.addAlu(AluOp.ADDI, machineRegs[31], alloc.startAddress+4)
+            } else {
+                currentFunc.add( InstrClassRef(machineRegs[1], type))
+                currentFunc.addCall(Stdlib.mallocObject, listOf(machineRegs[1]))
+                ret = currentFunc.addMov(machineRegs[8])
+            }
+            val numRegs = codeGenFuncArgs(args, klass.constructor.parameters.size, klass.constructor.isVararg, ret)
+            currentFunc.addCall(type.constructor, numRegs)
+            ret
+        }
+
 
         is TastFunctionLiteral -> TODO()
         is TastTypeDescriptor -> TODO()
-        is TastConstructor -> TODO()
         is TastNeg -> TODO()
 
     }
@@ -86,15 +112,19 @@ fun TastExpression.codeGen() : IRVal {
 // Generate the code for an argument list.
 // Returns the list of registers used
 
-fun codeGenFuncArgs(args:List<TastExpression>, numParameters:Int, isVariadic: Boolean) : List<IRVal> {
+fun codeGenFuncArgs(args:List<TastExpression>, numParameters:Int, isVariadic: Boolean, thisArg:IRVal?) : List<IRVal> {
     if (!isVariadic) {
         check(args.size == numParameters) { "Wrong number of parameters" }
         val args = args.map { it.codeGen() }
-        for((index,arg) in args.withIndex())
-            currentFunc.add(InstrMov(machineRegs[index+1], arg))
+        var regIndex = 1
+        if (thisArg!=null)
+            currentFunc.add(InstrMov(machineRegs[regIndex++], thisArg))
+        for(arg in args)
+            currentFunc.add(InstrMov(machineRegs[regIndex++], arg))
         return machineRegs.slice(1..<numParameters+1)
 
     } else {
+        var regIndex = 1
         val numVarargs = args.size - numParameters + 1
         val stackSize = 4 + 4*numVarargs
         val stackAlloc = currentFunc.stackAlloc(stackSize)
@@ -110,11 +140,13 @@ fun codeGenFuncArgs(args:List<TastExpression>, numParameters:Int, isVariadic: Bo
 
         // and the rest of the arguments in registers
         val args = args.slice(0..<numParameters-1).map { it.codeGen() }
-        for((index,arg) in args.withIndex())
-            currentFunc.add(InstrMov(machineRegs[index+1], arg))
+        if (thisArg!=null)
+            currentFunc.add(InstrMov(machineRegs[regIndex++], thisArg))
+        for(arg in args)
+            currentFunc.add(InstrMov(machineRegs[regIndex++], arg))
 
         // And add the pointer to the varargs to the stack
-        currentFunc.add(InstrAlui(machineRegs[numParameters], AluOp.ADDI, machineRegs[31], stackAlloc.startAddress + 4))
+        currentFunc.add(InstrAlui(machineRegs[regIndex++], AluOp.ADDI, machineRegs[31], stackAlloc.startAddress + 4))
         currentFunc.freeStackAlloc(stackAlloc)
         return machineRegs.slice(1..<numParameters+1)
     }
@@ -133,9 +165,25 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
             currentFunc.add(InstrJump(labelFalse))
         }
 
-        is TastAndOp -> TODO()
-        is TastOrOp -> TODO()
-        else -> TODO("codeGenBool ${this.javaClass}")
+        is TastAndOp -> {
+            val label = currentFunc.newLabel()
+            left.codeGenBool(label, labelFalse)
+            currentFunc.addLabel(label)
+            right.codeGenBool(labelTrue, labelFalse)
+        }
+
+        is TastOrOp -> {
+            val label = currentFunc.newLabel()
+            left.codeGenBool(labelTrue, label)
+            currentFunc.addLabel(label)
+            right.codeGenBool(labelTrue, labelFalse)
+        }
+
+        else -> {
+            val e = codeGen()
+            currentFunc.addBranch(AluOp.NEI, e, machineRegs[0], labelTrue)
+            currentFunc.addJump(labelFalse)
+        }
     }
 }
 
@@ -161,6 +209,10 @@ fun TastExpression.codeGenLvalue(value: IRVal) {
         is TastMember -> {
             val expr = expr.codeGen()
             currentFunc.addStoreField(type.getSize(), value, expr, member)
+        }
+
+        is TastGlobalVariable -> {
+            currentFunc.add(InstrStoreGlobal(type.getSize(), value, symbol))
         }
 
         else -> throw ParseError(location, "Not an lvalue in codeGen")
@@ -285,6 +337,13 @@ fun TastStatement.codeGen() {
         }
 
         is TastIfClause -> TODO()
+
+        is TastDeclareGlobalVar ->
+            if (expr != null) {
+                val rhs = expr.codeGen()
+                currentFunc.add(InstrStoreGlobal(4, rhs, symbol))
+            }
+
     }
 }
 

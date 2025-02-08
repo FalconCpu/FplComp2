@@ -265,8 +265,23 @@ class Peephole(private val func: Function) {
                 val prevInstr = prog[index-1]
                 if(prevInstr is InstrAlui && prevInstr.op==ADDI && prevInstr.dest==addr)
                     replaceWith( InstrStore(size, data, prevInstr.left, offset+prevInstr.value))
+
+                // Look for storing a zero
+                if (data.hasValueZero())
+                    replaceWith( InstrStore(size, machineRegs[0], addr, offset))
             }
 
+            is InstrStoreField -> {
+                // Look for storing a zero
+                if (data.hasValueZero())
+                    replaceWith( InstrStoreField(size, machineRegs[0], addr, offset))
+            }
+
+            is InstrStoreGlobal -> {
+                // Look for storing a zero
+                if (data.hasValueZero())
+                    replaceWith( InstrStoreGlobal(size, machineRegs[0], offset))
+            }
 
             else -> {}
         }
