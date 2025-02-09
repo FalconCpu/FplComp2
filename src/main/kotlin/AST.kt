@@ -222,6 +222,13 @@ sealed class AstNode (val location:Location) {
                 sb.append("Delete\n")
                 expr.dump(indent+1, sb)
             }
+
+            is AstIfExpression -> {
+                sb.append("IfExpression\n")
+                cond.dump(indent+1, sb)
+                thenExpr.dump(indent+1, sb)
+                elseExpr?.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -257,6 +264,7 @@ class AstCast(location: Location, val expr: AstExpression, val type: AstType) : 
 class AstFunctionCall(location: Location, val expr: AstExpression, val args: List<AstExpression>) : AstExpression(location)
 class AstNewArray(location: Location, val elType: AstType, val size: AstExpression, val isLocal:Boolean) : AstExpression(location)
 class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>, val isLocal:Boolean) : AstExpression(location)
+class AstIfExpression(location: Location, val cond: AstExpression, val thenExpr:AstExpression, val elseExpr:AstExpression) : AstExpression(location)
 
 
 // Type description classes

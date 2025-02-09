@@ -309,6 +309,20 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 Log.error(size.location, "Value is not compile time constant")
             TastNewArray(location, size, isLocal, ArrayType.make(elementType))
         }
+
+        is AstIfExpression -> {
+            val cond = cond.typeCheckBool(scope)
+            val pathContextElse = pathContextFalse
+            pathContext = pathContextTrue
+            val thenExpr = thenExpr.typeCheckRvalue(scope)
+            val pathContextThenOut = pathContext
+            pathContext = pathContextElse
+            val elseExpr = elseExpr.typeCheckRvalue(scope)
+            pathContext = listOf(pathContext, pathContextThenOut).merge()
+            elseExpr.checkType(thenExpr.type)
+            TastIfExpression(location, cond, thenExpr, elseExpr, thenExpr.type)
+
+        }
     }
 }
 
@@ -390,6 +404,9 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             val op = if (op==TokenKind.NE) AluOp.NEI else AluOp.EQI
             if ((lhs.type==IntType || lhs.type== CharType) && (rhs.type==IntType || rhs.type== CharType))
                 return TastCompareOp(location, op, lhs, rhs, BoolType)
+
+            if (lhs.type== StringType && rhs.type== StringType)
+                return TastCompareOp(location, if (this.op==TokenKind.EQ) AluOp.EQS else AluOp.NES, lhs, rhs, BoolType)
 
             if (lhs.type is ClassType && rhs.type==lhs.type)
                 return TastCompareOp(location, op, lhs, rhs, BoolType)

@@ -15,24 +15,37 @@ Done:
    constructors calls in codegen
    method calls
    delete operator
-
+   for loop iterators
+   string concatenation
+   string comparison ops
 
 ShortTerm:
    when statement
-   string comparison ops
-   string concatenation
    += -= etc
    not operator
    named constants
    enum
-   for loop iterators
+   break / continue
+
+Medium term:
+   splat operator
+   aggregate initializers
 
 Longer Term:
    List<>
    lambdas
-   change malloc to freelist
+   polymorphism
+   inline classes/arrays
+   change malloc to freelist rather than bump allocator
    inheritance
    virtual methods
    'is' tests
    abstract class
    generics?
+   extension functions
+
+optimizer:
+   common subexpression elimination
+   function inlining
+   function elimination (walk the call graph and remove unused functions)
+   hoisting

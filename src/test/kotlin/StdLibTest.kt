@@ -226,9 +226,140 @@ class StdLibTest {
         """.trimIndent()
 
         val expected = """
+            Concatenated string: Hello, world!
+
         """.trimIndent()
 
         runTest(prog,expected)
     }
+
+    @Test
+    fun strcmpTest() {
+        val prog = """
+            fun main()
+                val s1 = "apple"
+                val s2 = "apple"
+                val s3 = "apples"
+                val s4 = "banana"
+                val s5 = "applet"
+                val s6 = "appld"
+            
+                printf("%d\n", strcmp(s1, s2))  # Expected: 0 (equal)
+                printf("%d\n", strcmp(s1, s3))  # Expected: Negative (s1 < s3)
+                printf("%d\n", strcmp(s3, s1))  # Expected: Positive (s3 > s1)
+                printf("%d\n", strcmp(s1, s4))  # Expected: Negative (s1 < s4)
+                printf("%d\n", strcmp(s4, s1))  # Expected: Positive (s4 > s1)
+                printf("%d\n", strcmp(s1, s5))  # Expected: Negative (s1 < s5, 'e' < 't')
+                printf("%d\n", strcmp(s1, s6))  # Expected: Positive (s1 > s6, 'e' > 'd')
+        """.trimIndent()
+
+        val expected = """
+            0
+            -1
+            1
+            -1
+            1
+            -1
+            1
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun strequalsTest() {
+        val prog = """
+            fun main() 
+                printf("%d\n", strequals("hello", "hello") )
+                printf("%d\n", strequals("hello", "world") )
+                printf("%d\n", strequals("hello", "hell") )
+                printf("%d\n", strequals("abc", "abcd") )
+                printf("%d\n", strequals("", "") )
+                printf("%d\n", strequals("a", "a") )
+                printf("%d\n", strequals("a", "b") )
+                printf("%d\n", strequals("abcdef", "abcdef") )
+                printf("%d\n", strequals("abcdef", "abcdeg") )
+        """.trimIndent()
+
+        val expected = """
+            1
+            0
+            0
+            0
+            1
+            1
+            0
+            1
+            0
+     
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun stringComparisonsTest() {
+        val prog = """
+            fun main()
+                val a = "apple"
+                val b = "banana"
+                val c = "apple"
+
+                # Equality and inequality checks
+                if (a = c)
+                    printf("a == c\n")  # Should print
+                if (a != b) 
+                    printf("a != b\n")  # Should print
+                if (a != c) 
+                    printf("a != c\n")  # Should NOT print
+
+                # Lexicographic comparisons
+                if (a < b)
+                    printf("a < b\n")  # Should print
+                if (b > a)
+                    printf("b > a\n")  # Should print
+                if (a <= c) 
+                    printf("a <= c\n")  # Should print
+                if (b >= a) 
+                    printf("b >= a\n")  # Should print
+                if (a > b)
+                    printf("a > b\n")  # Should NOT print
+                if (b < a)
+                    printf("b < a\n")  # Should NOT print
+        """.trimIndent()
+
+        val expected = """
+            a == c
+            a != b
+            a < b
+            b > a
+            a <= c
+            b >= a
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun whenStatementTest() {
+        val prog = """
+            fun main()
+                for i in 0 to 5
+                    when i
+                        0 -> printf("zero\n")
+                        1 -> printf("one\n")
+                        2 -> printf("two\n")
+                        else -> printf("lots\n");
+        """.trimIndent()
+
+        val expected = """
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+
 
 }

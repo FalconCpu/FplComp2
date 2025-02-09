@@ -2,6 +2,7 @@
 # String management routines
 # #######################################################################
 
+# create a new string by concatenating the given strings.
 fun newString(strings:String...) -> String
     # Calculate the total length of the resulting string.
     var totalLength = 0
@@ -22,5 +23,26 @@ fun newString(strings:String...) -> String
     # Return the newly constructed string.
     return (result:String)
 
+# compare two strings. Returns 0 if the strings are equal, a negative number if s1 is less than s2
+# and a positive number if s1 is greater than s2.
+fun strcmp(s1:String, s2:String) -> Int
+    val len1 = s1.length
+    val len2 = s2.length
+    val minLen = if len1 < len2 then len1 else len2
+    for i in 0 to < minLen
+        if s1[i] != s2[i]
+            return s1[i] - s2[i]
+    return len1 - len2
+
+#compare two strings for equality. Returns true if the strings are equal, false otherwise.
+fun strequals(s1: String, s2: String) -> Bool
+    if (s1:Int) = (s2:Int)
+        return true
+    if s1.length != s2.length
+        return false
+    for i in 0 to < s1.length
+        if s1[i] != s2[i]
+            return false
+    return true
 
 

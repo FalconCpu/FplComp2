@@ -107,6 +107,23 @@ fun TastExpression.codeGen() : IRVal {
         is TastNeg -> TODO()
         is TastMethodCall -> TODO()
         is TastMethodLiteral -> TODO()
+
+        is TastIfExpression -> {
+            val ret = currentFunc.newTemp()
+            val labelTrue = currentFunc.newLabel()
+            val labelFalse = currentFunc.newLabel()
+            val labelEnd = currentFunc.newLabel()
+            this.cond.codeGenBool(labelTrue,labelFalse)
+            currentFunc.addLabel(labelTrue)
+            val thenValue = this.thenExpr.codeGen()
+            currentFunc.addMov(ret, thenValue)
+            currentFunc.addJump(labelEnd)
+            currentFunc.addLabel(labelFalse)
+            val elseValue = this.elseExpr.codeGen()
+            currentFunc.addMov(ret, elseValue)
+            currentFunc.addLabel(labelEnd)
+            ret
+        }
     }
 }
 
@@ -165,8 +182,26 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
         is TastCompareOp -> {
             val lhs = left.codeGen()
             val rhs = right.codeGen()
-            currentFunc.add(InstrBranch(op, lhs, rhs, labelTrue))
-            currentFunc.add(InstrJump(labelFalse))
+            when(op) {
+                AluOp.EQI,
+                AluOp.NEI,
+                AluOp.GEI,
+                AluOp.GTI,
+                AluOp.LEI,
+                AluOp.LTI -> {
+                    currentFunc.add(InstrBranch(op, lhs, rhs, labelTrue))
+                    currentFunc.add(InstrJump(labelFalse))
+                }
+
+                AluOp.EQS -> genCodeStrcmp(Stdlib.strequals, AluOp.NEI, labelTrue, labelFalse)
+                AluOp.NES -> genCodeStrcmp(Stdlib.strequals, AluOp.EQI, labelTrue, labelFalse)
+                AluOp.LTS -> genCodeStrcmp(Stdlib.strcmp,    AluOp.LTI, labelTrue, labelFalse)
+                AluOp.LES -> genCodeStrcmp(Stdlib.strcmp,    AluOp.LEI, labelTrue, labelFalse)
+                AluOp.GTS -> genCodeStrcmp(Stdlib.strcmp,    AluOp.GTI, labelTrue, labelFalse)
+                AluOp.GES -> genCodeStrcmp(Stdlib.strcmp,    AluOp.GEI, labelTrue, labelFalse)
+
+                else -> error("Invalio op in TastExpression.codeGenBool $op")
+            }
         }
 
         is TastAndOp -> {
@@ -189,6 +224,17 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
             currentFunc.addJump(labelFalse)
         }
     }
+}
+
+private fun TastCompareOp.genCodeStrcmp(func:Function, op:AluOp, labelTrue:Label, labelFalse:Label) {
+    val lhs = left.codeGen()
+    val rhs = right.codeGen()
+
+    currentFunc.addMov(machineRegs[1], lhs)
+    currentFunc.addMov(machineRegs[2], rhs)
+    val cmp = currentFunc.addCall(func, listOf(machineRegs[1],machineRegs[2]))
+    currentFunc.addBranch(op, cmp, machineRegs[0], labelTrue)
+    currentFunc.addJump(labelFalse)
 }
 
 // ---------------------------------------------------------------------------

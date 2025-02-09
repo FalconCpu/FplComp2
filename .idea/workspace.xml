@@ -4,17 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="destructors implemented">
-      <change afterPath="$PROJECT_DIR$/src/stdlib/string.fpl" afterDir="false" />
+    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="newString() function added to stdlib. for each loops implemented.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/AST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/AST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Instr.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Instr.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Stdlib.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Stdlib.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TODO" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stdlib/string.fpl" beforeDir="false" afterPath="$PROJECT_DIR$/src/stdlib/string.fpl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -107,6 +107,8 @@
     "Gradle.StdLibTest.outputChar.executor": "Run",
     "Gradle.StdLibTest.printHex.executor": "Run",
     "Gradle.StdLibTest.printfTest.executor": "Run",
+    "Gradle.StdLibTest.stringComparisonsTest.executor": "Run",
+    "Gradle.StdLibTest.whenStatementTest.executor": "Run",
     "Gradle.Tests in 'fpl.test'.executor": "Run",
     "Gradle.TypeCheckingTest.nullValues.executor": "Run",
     "Gradle.TypeCheckingTest.variadicArgs.executor": "Run",
@@ -150,31 +152,7 @@
       <recent name="falcon" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.StdLibTest.newStringTest">
-    <configuration name="MethodCallsTest.destructorTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;falcon.MethodCallsTest.destructorTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Gradle.StdLibTest.whenStatementTest">
     <configuration name="StdLibTest.forLoopArrayTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -223,7 +201,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="StdLibTest.outputChar" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="StdLibTest.stringComparisonsTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -236,7 +214,31 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.StdLibTest.outputChar&quot;" />
+            <option value="&quot;falcon.StdLibTest.stringComparisonsTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="StdLibTest.whenStatementTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;falcon.StdLibTest.whenStatementTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -270,19 +272,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Gradle.MethodCallsTest.destructorTest" />
       <item itemvalue="Gradle.StdLibTest.forLoopArrayTest" />
       <item itemvalue="Gradle.StdLibTest.newStringTest" />
-      <item itemvalue="Gradle.StdLibTest.outputChar" />
+      <item itemvalue="Gradle.StdLibTest.stringComparisonsTest" />
+      <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
       <item itemvalue="Gradle.Tests in 'fpl.test'" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.StdLibTest.newStringTest" />
+        <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
         <item itemvalue="Gradle.Tests in 'fpl.test'" />
+        <item itemvalue="Gradle.StdLibTest.stringComparisonsTest" />
+        <item itemvalue="Gradle.StdLibTest.newStringTest" />
         <item itemvalue="Gradle.StdLibTest.forLoopArrayTest" />
-        <item itemvalue="Gradle.StdLibTest.outputChar" />
-        <item itemvalue="Gradle.MethodCallsTest.destructorTest" />
       </list>
     </recent_temporary>
   </component>
@@ -383,7 +385,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739009023942</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="newString() function added to stdlib. for each loops implemented.">
+      <option name="closed" value="true" />
+      <created>1739021081745</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1739021081745</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -398,7 +408,8 @@
     <MESSAGE value="new() operator now working" />
     <MESSAGE value="method calls now implemented" />
     <MESSAGE value="destructors implemented" />
-    <option name="LAST_COMMIT_MESSAGE" value="destructors implemented" />
+    <MESSAGE value="newString() function added to stdlib. for each loops implemented." />
+    <option name="LAST_COMMIT_MESSAGE" value="newString() function added to stdlib. for each loops implemented." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fpl$LexerTest.ic" NAME="LexerTest Coverage Results" MODIFIED="1736365430595" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />

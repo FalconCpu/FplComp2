@@ -238,9 +238,17 @@ class Parser(private val lexer: Lexer) {
         return left
     }
 
-
     internal fun parseExpression() : AstExpression {
-        return parseOr()
+        if (lookahead.kind == IF) {
+            val loc = expect(IF)
+            val cond = parseOr()
+            expect(THEN)
+            val thenExpr = parseExpression()
+            expect(ELSE)
+            val elseExpr = parseExpression()
+            return AstIfExpression(loc.location, cond, thenExpr, elseExpr)
+        } else
+            return parseOr()
     }
 
     private fun parseTypeIdentifier() : AstTypeIdentifier {

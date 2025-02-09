@@ -196,6 +196,13 @@ sealed class Tast(val location: Location) {
                 sb.append("Delete\n")
                 expr.dump(indent + 1, sb)
             }
+
+            is TastIfExpression -> {
+                sb.append("IfExpression $type\n")
+                cond.dump(indent + 1, sb)
+                thenExpr.dump(indent + 1, sb)
+                elseExpr.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -230,6 +237,8 @@ class TastTypeDescriptor(location: Location, type:Type) : TastExpression(locatio
 class TastConstructor(location: Location, val args:List<TastExpression>, val isLocal:Boolean, type:Type) : TastExpression(location,type)
 class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
+class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
+
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
     init {
