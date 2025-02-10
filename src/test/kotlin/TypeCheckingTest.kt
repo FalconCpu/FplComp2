@@ -651,4 +651,90 @@ class TypeCheckingTest {
         runTest(input, expected)
     }
 
+    @Test
+    fun whenStatementTest() {
+        val prog = """
+            fun main() -> String
+                for i in 0 to 5
+                    when i
+                        0 -> return "zero\n"
+                        1 -> return "one\n"
+                        2 -> return "two\n"
+                        else -> 
+                            val x = "lots"
+                            return x
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function main
+                ForRange i LE
+                  IntLit 0 Int
+                  IntLit 5 Int
+                  When
+                    Variable i Int
+                    WhenClause [0]
+                      Return
+                        StringLit "zero" String
+                    WhenClause [1]
+                      Return
+                        StringLit "one" String
+                    WhenClause [2]
+                      Return
+                        StringLit "two" String
+                    WhenClause []
+                      Declare x String
+                        StringLit "lots" String
+                      Return
+                        Variable x String
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun whenStatementDuplicateCaseTest() {
+        val prog = """
+            fun main() -> String
+                for i in 0 to 5
+                    when i
+                        0 -> return "zero\n"
+                        1 -> return "one\n"
+                        2 -> return "two\n"
+                        2 -> return "another two\n"
+                        else -> 
+                            val x = "lots"
+                            return x
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:7.13: Duplicate value '2' in when
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun whenStatementDuplicateElseTest() {
+        val prog = """
+            fun main() -> String
+                for i in 0 to 5
+                    when i
+                        0 -> return "zero\n"
+                        1 -> return "one\n"
+                        2 -> return "two\n"
+                        else -> 
+                            val x = "lots"
+                            return x
+                        else -> return "duplicate else"
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:10.13: Duplicate else clause in when
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
 }

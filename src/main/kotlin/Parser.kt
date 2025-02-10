@@ -500,6 +500,40 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
     }
 
+    private fun parseWhenClause(block:AstBlock) : AstWhenClause {
+        val location = lookahead.location
+        val exprs= mutableListOf<AstExpression>()
+        val isElse = canTake(ELSE)
+        if (!isElse)
+            do
+                exprs.add(parseExpression())
+            while (canTake(COMMA))
+        expect(ARROW)
+        val ret = AstWhenClause(location, exprs, isElse, block)
+        if (canTake(EOL))
+            parseIndentedBlock(ret)
+        else
+            parseStatement(ret)
+        return ret
+    }
+
+    private fun parseWhenStatement(block: AstBlock) {
+        expect(WHEN)
+        val expr = parseExpression()
+        expectEol()
+        val clauses = mutableListOf<AstWhenClause>()
+        if (canTake(INDENT))
+            do {
+                clauses += parseWhenClause(block)
+            } while (lookahead.kind!=DEDENT && lookahead.kind!=EOF)
+        else
+            Log.error(lookahead.location, "Expected indented block after when")
+        expect(DEDENT)
+        parseOptionalEnd(WHEN)
+        val ret = AstWhenStatement(expr.location, expr, clauses)
+        block.add(ret)
+    }
+
     private fun parseClassParameter() : AstParameter {
         val kind = if (lookahead.kind==VAR || lookahead.kind==VAL) nextToken().kind else EOL
         val id = parseIdentifier()
@@ -567,6 +601,7 @@ class Parser(private val lexer: Lexer) {
             IDENTIFIER, OPENB -> parseAssign(block)
             FOR -> parseFor(block)
             IF -> parseIf(block)
+            WHEN -> parseWhenStatement(block)
             DELETE -> parseDelete(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")

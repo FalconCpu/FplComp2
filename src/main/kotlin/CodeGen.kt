@@ -439,6 +439,62 @@ fun TastStatement.codeGen() {
             currentFunc.addCall(Stdlib.free, listOf(machineRegs[1]))
             currentFunc.addLabel(label)
         }
+
+        is TastWhenClause -> TODO()
+
+        is TastWhen -> {
+            val expr = this.expr.codeGen()
+            val clauseLabels = mutableMapOf<TastWhenClause, Label>()
+            var labelEnd = currentFunc.newLabel()
+            for (clause in clauses) {
+                val clauseLabel = currentFunc.newLabel()
+                clauseLabels[clause] = clauseLabel
+                if (clause.isElse)
+                    currentFunc.addJump(clauseLabel)
+                else
+                    for(v in clause.values) {
+                        val vx = currentFunc.addMov(v)
+                        currentFunc.addBranch(AluOp.EQI, expr, vx, clauseLabel)
+                    }
+            }
+            currentFunc.addJump(labelEnd)
+            for((clause, label) in clauseLabels) {
+                currentFunc.addLabel(label)
+                for (stmt in clause.statements)
+                    stmt.codeGen()
+                currentFunc.addJump(labelEnd)
+            }
+            currentFunc.addLabel(labelEnd)
+        }
+
+        is TastWhenClauseString -> error("TastWhenClauseString not inside when")
+
+        is TastWhenString -> {
+            val expr = this.expr.codeGen()
+            val clauseLabels = mutableMapOf<TastWhenClauseString, Label>()
+            var labelEnd = currentFunc.newLabel()
+            for (clause in clauses) {
+                val clauseLabel = currentFunc.newLabel()
+                clauseLabels[clause] = clauseLabel
+                if (clause.isElse)
+                    currentFunc.addJump(clauseLabel)
+                else
+                    for(v in clause.values) {
+                        currentFunc.add( InstrLea(machineRegs[1], v))
+                        currentFunc.addMov(machineRegs[2], expr)
+                        val cmp = currentFunc.addCall(Stdlib.strequals, listOf(machineRegs[1], machineRegs[2]))
+                        currentFunc.addBranch(AluOp.NEI, cmp , machineRegs[0], clauseLabel)
+                    }
+            }
+            currentFunc.addJump(labelEnd)
+            for((clause, label) in clauseLabels) {
+                currentFunc.addLabel(label)
+                for (stmt in clause.statements)
+                    stmt.codeGen()
+                currentFunc.addJump(labelEnd)
+            }
+            currentFunc.addLabel(labelEnd)
+        }
     }
 }
 

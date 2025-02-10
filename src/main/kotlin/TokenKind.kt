@@ -29,7 +29,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     DOTDOT("..", true),
     DOTDOTDOT("...", true),
     COLON(":", true),
-    ARROW("->", true),
+    ARROW("->", false),
     QUESTION("?", true),
     EMARK("!", true),
     DOUBLE_DOT("..", true),

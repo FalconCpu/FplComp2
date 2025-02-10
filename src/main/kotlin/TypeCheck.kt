@@ -636,7 +636,7 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val array = expr.typeCheck(scope)
             val elementType = when(array.type) {
                 is ArrayType -> array.type.elementType
-                is String -> CharType
+                is StringType -> CharType
                 is ErrorType -> ErrorType
                 else -> makeErrorType(array.location, "Got type '${array.type}' when expecting array")
             }
@@ -702,8 +702,97 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
                 Log.error(location, "Cannot delete expression of type $type")
             return TastDelete(location, expr)
         }
+
+        is AstWhenClause -> TODO()
+
+        is AstWhenStatement -> {
+            val expr = expr.typeCheckRvalue(scope)
+            return if (expr.type is IntType)
+                TastWhen(location, expr, extractWhenClausesInt(expr.type, scope))
+            else if (expr.type is StringType)
+                TastWhenString(location, expr, extractWhenClausesString(expr.type, scope))
+            else {
+                TastWhen(location, expr, emptyList())
+            }
+        }
     }
 }
+
+// ----------------------------------------------------------------------------
+//                          helper function for when clauses
+// ----------------------------------------------------------------------------
+
+fun AstWhenStatement.extractWhenClausesInt(exprType:Type, scope: SymbolTable) : List<TastWhenClause> {
+    val tastClauses = mutableListOf<TastWhenClause>()
+    val allClauses = mutableSetOf<Int>()
+    val pathContextIn = pathContext
+    val pathContextOut = mutableListOf<PathContext>()
+    var seenElse = false
+    for (clause in clauses) {
+        val values = mutableListOf<Int>()
+        for (ce in clause.exprs) {
+            val tast = ce.typeCheckRvalue(scope)
+            tast.checkType(exprType)
+            if (tast.isCompileTimeConstant()) {
+                val value = tast.getCompileTimeConstant()
+                values.add(value)
+                if (value in allClauses)
+                    Log.error(tast.location, "Duplicate value '$value' in when")
+                allClauses.add(value)
+            } else
+                Log.error(tast.location, "Cannot use non-constant expression in when")
+        }
+        if (clause.isElse) {
+            if (seenElse)
+                Log.error(clause.location, "Duplicate else clause in when")
+            seenElse = true
+        }
+        val tc = TastWhenClause(location, values, clause.isElse, scope)
+        pathContext = pathContextIn
+        for (stmt in clause.statements)
+            tc.add(stmt.typeCheck(tc.symbolTable))
+        pathContextOut.add(pathContext)
+        tastClauses.add(tc)
+    }
+    pathContext = pathContextOut.merge()
+    return tastClauses
+}
+
+fun AstWhenStatement.extractWhenClausesString(exprType:Type, scope: SymbolTable) : List<TastWhenClauseString> {
+    val tastClauses = mutableListOf<TastWhenClauseString>()
+    val allClauses = mutableSetOf<String>()
+    val pathContextIn = pathContext
+    val pathContextOut = mutableListOf<PathContext>()
+    var seenElse = false
+    for (clause in clauses) {
+        val values = mutableListOf<String>()
+        for (ce in clause.exprs) {
+            val tast = ce.typeCheckRvalue(scope)
+            tast.checkType(exprType)
+            if (tast is TastStringLiteral) {
+                values.add(tast.value)
+                if (tast.value in allClauses)
+                    Log.error(tast.location, "Duplicate value '${tast.value}' in when")
+                allClauses.add(tast.value)
+            } else
+                Log.error(tast.location, "Cannot use non-constant expression in when")
+        }
+        if (clause.isElse) {
+            if (seenElse)
+                Log.error(clause.location, "Duplicate else clause in when")
+            seenElse = true
+        }
+        val tc = TastWhenClauseString(location, values, clause.isElse, scope)
+        pathContext = pathContextIn
+        for (stmt in clause.statements)
+            tc.add(stmt.typeCheck(tc.symbolTable))
+        pathContextOut.add(pathContext)
+        tastClauses.add(tc)
+    }
+    pathContext = pathContextOut.merge()
+    return tastClauses
+}
+
 
 // ----------------------------------------------------------------------------
 //                          generate Symbols

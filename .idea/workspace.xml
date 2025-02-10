@@ -4,18 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="newString() function added to stdlib. for each loops implemented.">
+    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Operators now work for string compare">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/AST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/AST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Stdlib.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Stdlib.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TODO" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/stdlib/string.fpl" beforeDir="false" afterPath="$PROJECT_DIR$/src/stdlib/string.fpl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -138,7 +137,7 @@
     "project.structure.last.edited": "Facets",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "project.kotlinCompiler"
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
   <component name="RecentsManager">
@@ -152,7 +151,7 @@
       <recent name="falcon" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.StdLibTest.whenStatementTest">
+  <component name="RunManager" selected="Gradle.Tests in 'fpl.test'">
     <configuration name="StdLibTest.forLoopArrayTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -280,8 +279,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
         <item itemvalue="Gradle.Tests in 'fpl.test'" />
+        <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
         <item itemvalue="Gradle.StdLibTest.stringComparisonsTest" />
         <item itemvalue="Gradle.StdLibTest.newStringTest" />
         <item itemvalue="Gradle.StdLibTest.forLoopArrayTest" />
@@ -393,7 +392,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739021081745</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Operators now work for string compare">
+      <option name="closed" value="true" />
+      <created>1739092838908</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1739092838909</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -409,11 +416,12 @@
     <MESSAGE value="method calls now implemented" />
     <MESSAGE value="destructors implemented" />
     <MESSAGE value="newString() function added to stdlib. for each loops implemented." />
-    <option name="LAST_COMMIT_MESSAGE" value="newString() function added to stdlib. for each loops implemented." />
+    <MESSAGE value="Operators now work for string compare" />
+    <option name="LAST_COMMIT_MESSAGE" value="Operators now work for string compare" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fpl$LexerTest.ic" NAME="LexerTest Coverage Results" MODIFIED="1736365430595" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
     <SUITE FILE_PATH="coverage/fpl$Tests_in__fpl_test_.ic" NAME="Tests in 'fpl.test' Coverage Results" MODIFIED="1736687751212" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
-    <SUITE FILE_PATH="coverage/fplcomp$Tests_in__fpl_test_.ic" NAME="Tests in 'fpl.test' Coverage Results" MODIFIED="1738805848213" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
+    <SUITE FILE_PATH="coverage/fplcomp$Tests_in__fpl_test_.ic" NAME="Tests in 'fpl.test' Coverage Results" MODIFIED="1739148524695" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />
   </component>
 </project>

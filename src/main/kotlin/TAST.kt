@@ -12,7 +12,7 @@ sealed class Tast(val location: Location) {
             is TastIntLiteral -> sb.append("IntLit $value $type\n")
             is TastCharLiteral -> sb.append("CharLit $value $type\n")
             is TastRealLiteral -> sb.append("RealLit $value $type\n")
-            is TastStringLiteral -> sb.append("StringLit \"$value\" $type\n")
+            is TastStringLiteral -> sb.append("StringLit \"${value.replace("\n","")}\" $type\n")
             is TastVariable -> sb.append("Variable $symbol $type\n")
             is TastGlobalVariable -> sb.append("Variable $symbol $type\n")
             is TastDeclareVar -> {
@@ -203,6 +203,33 @@ sealed class Tast(val location: Location) {
                 thenExpr.dump(indent + 1, sb)
                 elseExpr.dump(indent + 1, sb)
             }
+
+            is TastWhenClause -> {
+                sb.append("WhenClause $values\n")
+                for (stmt in statements)
+                    stmt.dump(indent + 1, sb)
+            }
+
+            is TastWhenClauseString -> {
+                sb.append("WhenClause $values\n")
+                for (stmt in statements)
+                    stmt.dump(indent + 1, sb)
+            }
+
+            is TastWhen -> {
+                sb.append("When\n")
+                expr.dump(indent + 1, sb)
+                for (clause in clauses)
+                    clause.dump(indent + 1, sb)
+            }
+
+            is TastWhenString -> {
+                sb.append("WhenString\n")
+                expr.dump(indent + 1, sb)
+                for (clause in clauses)
+                    clause.dump(indent + 1, sb)
+            }
+
         }
     }
 }
@@ -239,7 +266,6 @@ class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExp
 class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
 class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
 
-
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
     init {
         Log.error(location, message)
@@ -255,6 +281,8 @@ class TastExpressionStatement(location: Location, val expr: TastExpression) : Ta
 class TastReturn(location: Location, val expr: TastExpression?) : TastStatement(location)
 class TastDelete(location: Location, val expr: TastExpression) : TastStatement(location)
 class TastIf(location: Location, val clauses:List<TastIfClause>) : TastStatement(location)
+class TastWhen(location: Location, val expr: TastExpression, val clauses:List<TastWhenClause>) : TastStatement(location)
+class TastWhenString(location: Location, val expr: TastExpression, val clauses:List<TastWhenClauseString>) : TastStatement(location)
 
 class TastDeclareField(location: Location, val symbol: FieldSymbol, val expr: TastExpression?) : TastStatement(location)
 
@@ -297,6 +325,13 @@ class TastIfClause(location: Location, val expr: TastExpression?, symbolTable: S
     : TastBlock(location, symbolTable) {
         lateinit var label : Label
     }
+
+class TastWhenClause(location: Location, val values: List<Int>, val isElse:Boolean, symbolTable: SymbolTable)
+    : TastBlock(location, symbolTable)
+
+class TastWhenClauseString(location: Location, val values: List<String>, val isElse:Boolean, symbolTable: SymbolTable)
+    : TastBlock(location, symbolTable)
+
 
 class TastClass(location: Location, symbolTable: SymbolTable, val constructor: Function)
     : TastBlock(location, symbolTable)

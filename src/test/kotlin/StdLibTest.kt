@@ -348,18 +348,55 @@ class StdLibTest {
             fun main()
                 for i in 0 to 5
                     when i
-                        0 -> printf("zero\n")
-                        1 -> printf("one\n")
-                        2 -> printf("two\n")
-                        else -> printf("lots\n");
+                        0 -> 
+                            printf("zero\n")
+                        1 -> 
+                            printf("one\n")
+                        2 -> 
+                            printf("two\n")
+                        else -> 
+                            printf("lots\n")
         """.trimIndent()
 
         val expected = """
+            zero
+            one
+            two
+            lots
+            lots
+            lots
+
         """.trimIndent()
 
         runTest(prog,expected)
     }
 
+    @Test
+    fun whenStatementStringTest() {
+        val prog = """
+            fun handleFruit(fruit: String)
+                when fruit
+                    "apple" -> printf("It's an apple!\n")
+                    "banana" -> printf("It's a banana!\n")
+                    "cherry" -> printf("It's a cherry!\n")
+                    else -> printf("Unknown fruit\n")
+            
+            fun main()
+                handleFruit("apple")
+                handleFruit("banana")
+                handleFruit("cherry")
+                handleFruit("grape")
+        """.trimIndent()
+
+        val expected = """
+            It's an apple!
+            It's a banana!
+            It's a cherry!
+            Unknown fruit
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
 
 
 }

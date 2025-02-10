@@ -18,14 +18,14 @@ Done:
    for loop iterators
    string concatenation
    string comparison ops
+   when statement
 
 ShortTerm:
-   when statement
    += -= etc
-   not operator
    named constants
    enum
    break / continue
+   not operator
 
 Medium term:
    splat operator
@@ -43,6 +43,7 @@ Longer Term:
    abstract class
    generics?
    extension functions
+   when statement - use a binary search or lookup table
 
 optimizer:
    common subexpression elimination

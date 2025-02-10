@@ -227,7 +227,21 @@ sealed class AstNode (val location:Location) {
                 sb.append("IfExpression\n")
                 cond.dump(indent+1, sb)
                 thenExpr.dump(indent+1, sb)
-                elseExpr?.dump(indent+1, sb)
+                elseExpr.dump(indent+1, sb)
+            }
+
+            is AstWhenClause -> {
+                sb.append("WhenClause\n")
+                exprs.forEach{ it.dump(indent+1, sb) }
+                for(stmt in statements)
+                    stmt.dump(indent+1, sb)
+            }
+
+            is AstWhenStatement -> {
+                sb.append("WhenStatement\n")
+                expr.dump(indent+1, sb)
+                for(clause in clauses)
+                    clause.dump(indent+1, sb)
             }
         }
     }
@@ -266,7 +280,6 @@ class AstNewArray(location: Location, val elType: AstType, val size: AstExpressi
 class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>, val isLocal:Boolean) : AstExpression(location)
 class AstIfExpression(location: Location, val cond: AstExpression, val thenExpr:AstExpression, val elseExpr:AstExpression) : AstExpression(location)
 
-
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)
 class AstArrayType(location: Location, val astType: AstType) : AstType(location)
@@ -289,6 +302,7 @@ class AstAssign(location: Location, val lhs: AstExpression, val rhs: AstExpressi
 class AstExpressionStatement(location: Location, val expr: AstExpression) : AstStatement(location)
 class AstIfStatement(location: Location, val clauses: List<AstIfClause>) : AstStatement(location)
 class AstDeleteStatement(location: Location, val expr: AstExpression) : AstStatement(location)
+class AstWhenStatement(location: Location, val expr: AstExpression, val clauses:List<AstWhenClause>) : AstStatement(location)
 
 // Block classes
 class AstTopLevel() : AstBlock(Location.nullLocation, null) {
@@ -318,6 +332,7 @@ class AstForArray(location: Location, val id: AstIdentifier, val expr: AstExpres
 class AstIfClause(location: Location, val expr: AstExpression?,  parent:AstBlock) : AstBlock(location, parent) {
     lateinit var pathContextOut : PathContext
 }
+class AstWhenClause(location: Location, val exprs:List<AstExpression>, val isElse:Boolean, parent:AstBlock) : AstBlock(location, parent)
 
 // Miscellaneous classes
 class AstParameter(location: Location, val kind:TokenKind, val id: AstIdentifier, val type: AstType) : AstNode(location)
