@@ -6,6 +6,8 @@ package falcon
 // Convert a type-checked AST into the IR code.
 
 private lateinit var currentFunc : Function
+private var breakLabel : Label? = null
+private var continueLabel : Label? = null
 
 // ---------------------------------------------------------------------------
 //                            Expressions
@@ -269,7 +271,52 @@ fun TastExpression.codeGenLvalue(value: IRVal) {
     }
 }
 
+// ---------------------------------------------------------------------------
+//                            CodeGenLvalueOperator
+// ---------------------------------------------------------------------------
 
+fun TastExpression.codeGenLvalueOperator(op:TokenKind, value: IRVal) {
+    check(type.isIntegerType())
+    val op = when(op) {
+        TokenKind.PLUSEQ -> AluOp.ADDI
+        TokenKind.MINUSEQ -> AluOp.SUBI
+        TokenKind.STAREQ -> AluOp.MULI
+        TokenKind.SLASHEQ -> AluOp.DIVI
+        else -> error("Invalid op $op")
+    }
+    when(this) {
+        is TastVariable -> {
+            val sym = currentFunc.mapSymbol(symbol)
+            currentFunc.add(InstrAlu( sym, op, sym, value) )
+        }
+
+        is TastIndex -> {
+            val expr = expr.codeGen()
+            val index = index.codeGen()
+            val indexScaled = currentFunc.addAlu(AluOp.MULI, index, type.getSize())
+            val addr = currentFunc.addAlu(AluOp.ADDI, expr, indexScaled)
+            val tmp = currentFunc.addLoad(type.getSize(), addr, 0)
+            val tmp2 = currentFunc.addAlu(op, tmp, value)
+            currentFunc.addStore(type.getSize(), tmp2, addr, 0 )
+        }
+
+        is TastMember -> {
+            val expr = expr.codeGen()
+            val tmp = currentFunc.addLoadField(type.getSize(), expr, member)
+            val tmp2 = currentFunc.addAlu(op, tmp, value)
+            currentFunc.addStoreField(type.getSize(), tmp2, expr, member)
+        }
+
+        is TastGlobalVariable -> {
+            val tmp = currentFunc.newTemp()
+            currentFunc.add(InstrLoadGlobal(type.getSize(), tmp, symbol))
+            val tmp2 = currentFunc.addAlu(op, tmp, value)
+            currentFunc.add(InstrStoreGlobal(type.getSize(), tmp2, symbol))
+        }
+
+        else -> throw ParseError(location, "Not an lvalue in codeGen")
+    }
+}
 
 // ---------------------------------------------------------------------------
 //                            Statements
@@ -290,6 +337,10 @@ fun TastStatement.codeGen() {
             val labelStart = currentFunc.newLabel()
             val labelCond = currentFunc.newLabel()
             val labelEnd = currentFunc.newLabel()
+            val oldBreakLabel = breakLabel
+            breakLabel = labelEnd
+            val oldContinueLabel = continueLabel
+            continueLabel = labelStart
             currentFunc.addJump(labelCond)
             currentFunc.addLabel(labelStart)
             for (stmt in statements)
@@ -297,18 +348,26 @@ fun TastStatement.codeGen() {
             currentFunc.addLabel(labelCond)
             expr.codeGenBool(labelStart, labelEnd)
             currentFunc.addLabel(labelEnd)
+            breakLabel = oldBreakLabel
+            continueLabel = oldContinueLabel
         }
 
         is TastRepeat -> {
             val labelStart = currentFunc.newLabel()
             val labelCond = currentFunc.newLabel()
             val labelEnd = currentFunc.newLabel()
+            val oldBreakLabel = breakLabel
+            breakLabel = labelEnd
+            val oldContinueLabel = continueLabel
+            continueLabel = labelStart
             currentFunc.addLabel(labelStart)
             for (stmt in statements)
                 stmt.codeGen()
             currentFunc.addLabel(labelCond)
             expr.codeGenBool(labelEnd, labelStart)
             currentFunc.addLabel(labelEnd)
+            breakLabel = oldBreakLabel
+            continueLabel = oldContinueLabel
         }
 
         is TastDeclareVar ->
@@ -333,6 +392,11 @@ fun TastStatement.codeGen() {
             val labelStart = currentFunc.newLabel()
             val labelCond = currentFunc.newLabel()
             val labelEnd = currentFunc.newLabel()
+            val labelContinue = currentFunc.newLabel()
+            val oldBreakLabel = breakLabel
+            breakLabel = labelEnd
+            val oldContinueLabel = continueLabel
+            continueLabel = labelContinue
             val iterVar = currentFunc.mapSymbol(this.sym)
             val from = from.codeGen()
             val to = to.codeGen()
@@ -341,6 +405,7 @@ fun TastStatement.codeGen() {
             currentFunc.addLabel(labelStart)
             for (stmt in statements)
                 stmt.codeGen()
+            currentFunc.addLabel(labelContinue)
             if (comparator== TokenKind.LT || comparator== TokenKind.LE)
                 currentFunc.add(InstrAlui(iterVar, AluOp.ADDI, iterVar, 1))
             else
@@ -355,12 +420,19 @@ fun TastStatement.codeGen() {
             }
             currentFunc.addBranch(op, iterVar, to, labelStart)
             currentFunc.addLabel(labelEnd)
+            breakLabel = oldBreakLabel
+            continueLabel = oldContinueLabel
         }
 
         is TastForArray -> {
             val labelStart = currentFunc.newLabel()
             val labelCond = currentFunc.newLabel()
             val labelEnd = currentFunc.newLabel()
+            val labelContinue = currentFunc.newLabel()
+            val oldBreakLabel = breakLabel
+            breakLabel = labelEnd
+            val oldContinueLabel = continueLabel
+            continueLabel = labelContinue
             val sym = currentFunc.mapSymbol(this.sym)
             val ptr = currentFunc.addMov( array.codeGen() )
             val length = currentFunc.addLoadField(4, ptr, lengthSymbol)
@@ -371,9 +443,10 @@ fun TastStatement.codeGen() {
             currentFunc.addJump(labelCond)
             currentFunc.addLabel(labelStart)
             currentFunc.add( InstrLoad(elementSize, sym, ptr, 0) )
-            currentFunc.add( InstrAlui(ptr, AluOp.ADDI, ptr, elementSize) )
             for (stmt in statements)
                 stmt.codeGen()
+            currentFunc.addLabel(labelContinue)
+            currentFunc.add( InstrAlui(ptr, AluOp.ADDI, ptr, elementSize) )
             currentFunc.addLabel(labelCond)
             currentFunc.addBranch(AluOp.NEI, ptr, endPtr, labelStart)
             currentFunc.addLabel(labelEnd)
@@ -494,6 +567,19 @@ fun TastStatement.codeGen() {
                 currentFunc.addJump(labelEnd)
             }
             currentFunc.addLabel(labelEnd)
+        }
+
+        is TastBreak -> {
+            currentFunc.addJump(breakLabel!!)
+        }
+
+        is TastContinue -> {
+            currentFunc.addJump(continueLabel!!)
+        }
+
+        is TastCompoundAssign -> {
+            val rhs = rhs.codeGen()
+            lhs.codeGenLvalueOperator(op,rhs)
         }
     }
 }

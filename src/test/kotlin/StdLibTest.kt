@@ -393,10 +393,88 @@ class StdLibTest {
             It's a banana!
             It's a cherry!
             Unknown fruit
+            
         """.trimIndent()
 
         runTest(prog,expected)
     }
 
+    @Test
+    fun breakStatementTest() {
+        val prog = """
+            fun main()
+                var i = 0
+                
+                while (i < 10)
+                    i = i + 1
 
+                    if (i = 3)
+                        printf("Skipping 3\n")
+                        continue  # Skips the rest of the loop body for i = 3
+
+                    if (i = 7)
+                        printf("Breaking at 7\n")
+                        break  # Exits the loop when i = 7
+
+                    printf("i: %d\n", i)
+
+                printf("Loop finished. Final i: %d\n", i)
+        """.trimIndent()
+
+        val expected = """
+            i: 1
+            i: 2
+            Skipping 3
+            i: 4
+            i: 5
+            i: 6
+            Breaking at 7
+            Loop finished. Final i: 7
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun compoundAssignTest() {
+        val prog = """
+            var globalY = 0
+            fun foo() -> Int
+                globalY += 1
+                return globalY
+
+            fun main()
+                var x = 10
+                x += 5
+                printf("x after += 5: %d\n", x)  # Should print 15
+            
+                x -= 3
+                printf("x after -= 3: %d\n", x)  # Should print 12
+            
+                # Testing with an array
+                val arr = new Array<Int>(3)
+                arr[0] = 5
+                arr[1] = 10
+                arr[2] = 15
+            
+                arr[1] += 7
+                printf("arr[1] after += 7: %d\n", arr[1])  # Should print 17
+            
+                # Testing with function calls (should evaluate only once)
+                arr[foo()] += 1   # Should add 1 to arr[1]
+                printf("arr[1] after foo() += 1: %d\n", arr[1])  # Should print 18
+        """.trimIndent()
+
+        val expected = """
+            x after += 5: 15
+            x after -= 3: 12
+            arr[1] after += 7: 17
+            arr[1] after foo() += 1: 18
+
+            """.trimIndent()
+
+        runTest(prog,expected)
+    }
 }
+

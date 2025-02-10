@@ -78,6 +78,12 @@ sealed class Tast(val location: Location) {
                 rhs.dump(indent + 1, sb)
             }
 
+            is TastCompoundAssign -> {
+                sb.append("Assign $op\n")
+                lhs.dump(indent + 1, sb)
+                rhs.dump(indent + 1, sb)
+            }
+
             is TastError -> sb.append("Error\n")
 
             is TastWhile -> {
@@ -230,6 +236,13 @@ sealed class Tast(val location: Location) {
                     clause.dump(indent + 1, sb)
             }
 
+            is TastBreak -> {
+                sb.append("Break\n")
+            }
+
+            is TastContinue -> {
+                sb.append("Continue\n")
+            }
         }
     }
 }
@@ -277,10 +290,13 @@ sealed class TastStatement(location: Location) : Tast(location)
 class TastDeclareVar(location: Location, val symbol:VarSymbol, val expr: TastExpression?) : TastStatement(location)
 class TastDeclareGlobalVar(location: Location, val symbol: GlobalVarSymbol, val expr: TastExpression?) : TastStatement(location)
 class TastAssign(location: Location, val lhs: TastExpression, val rhs: TastExpression) : TastStatement(location)
+class TastCompoundAssign(location: Location, val op:TokenKind, val lhs: TastExpression, val rhs: TastExpression) : TastStatement(location)
 class TastExpressionStatement(location: Location, val expr: TastExpression) : TastStatement(location)
 class TastReturn(location: Location, val expr: TastExpression?) : TastStatement(location)
 class TastDelete(location: Location, val expr: TastExpression) : TastStatement(location)
 class TastIf(location: Location, val clauses:List<TastIfClause>) : TastStatement(location)
+class TastBreak(location: Location) : TastStatement(location)
+class TastContinue(location: Location) : TastStatement(location)
 class TastWhen(location: Location, val expr: TastExpression, val clauses:List<TastWhenClause>) : TastStatement(location)
 class TastWhenString(location: Location, val expr: TastExpression, val clauses:List<TastWhenClauseString>) : TastStatement(location)
 

@@ -433,6 +433,11 @@ class Parser(private val lexer: Lexer) {
             val rhs = parseExpression()
             expectEol()
             block.add(AstAssign(lhs.location, lhs, rhs))
+        } else if (lookahead.kind in listOf(PLUSEQ, MINUSEQ, STAREQ, SLASHEQ)) {
+            val tok = nextToken()
+            val rhs = parseExpression()
+            expectEol()
+            block.add(AstCompoundAssign(tok.location, tok.kind, lhs, rhs))
         } else {
             expectEol()
             if (lhs is AstFunctionCall)
@@ -590,6 +595,19 @@ class Parser(private val lexer: Lexer) {
         parseOptionalEnd(CLASS)
     }
 
+    private fun parseBreakStatement(block: AstBlock) {
+        val loc = expect(BREAK)
+        expectEol()
+        val ret = AstBreakStatement(loc.location)
+        block.add(ret)
+    }
+
+    private fun parseContinueStatement(block: AstBlock) {
+        val loc = expect(CONTINUE)
+        expectEol()
+        val ret = AstContinueStatement(loc.location)
+        block.add(ret)
+    }
 
     private fun parseStatement(block:AstBlock) {
         when (lookahead.kind) {
@@ -603,6 +621,8 @@ class Parser(private val lexer: Lexer) {
             IF -> parseIf(block)
             WHEN -> parseWhenStatement(block)
             DELETE -> parseDelete(block)
+            BREAK -> parseBreakStatement(block)
+            CONTINUE -> parseContinueStatement(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")

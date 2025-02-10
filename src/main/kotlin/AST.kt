@@ -135,6 +135,12 @@ sealed class AstNode (val location:Location) {
                 rhs.dump(indent+1, sb)
             }
 
+            is AstCompoundAssign -> {
+                sb.append("CompoundAssign $op\n")
+                lhs.dump(indent+1, sb)
+                rhs.dump(indent+1, sb)
+            }
+
             is AstCast -> {
                 sb.append("Cast\n")
                 expr.dump(indent+1, sb)
@@ -243,6 +249,14 @@ sealed class AstNode (val location:Location) {
                 for(clause in clauses)
                     clause.dump(indent+1, sb)
             }
+
+            is AstBreakStatement -> {
+                sb.append("Break\n")
+            }
+
+            is AstContinueStatement -> {
+                sb.append("Continue\n")
+            }
         }
     }
 }
@@ -299,10 +313,14 @@ class AstDeclareField(location: Location, val decl:TokenKind, val id: AstIdentif
 
 class AstReturn(location: Location, val expr: AstExpression?) : AstStatement(location)
 class AstAssign(location: Location, val lhs: AstExpression, val rhs: AstExpression) : AstStatement(location)
+class AstCompoundAssign(location: Location, val op: TokenKind, val lhs: AstExpression, val rhs: AstExpression) : AstStatement(location)
 class AstExpressionStatement(location: Location, val expr: AstExpression) : AstStatement(location)
 class AstIfStatement(location: Location, val clauses: List<AstIfClause>) : AstStatement(location)
 class AstDeleteStatement(location: Location, val expr: AstExpression) : AstStatement(location)
 class AstWhenStatement(location: Location, val expr: AstExpression, val clauses:List<AstWhenClause>) : AstStatement(location)
+class AstBreakStatement(location: Location) : AstStatement(location)
+class AstContinueStatement(location: Location) : AstStatement(location)
+
 
 // Block classes
 class AstTopLevel() : AstBlock(Location.nullLocation, null) {

@@ -104,6 +104,10 @@ class Lexer(private val fileName: String, private val fileHandle: Reader) {
         if ((c=='<' && lookahead=='=') ||
             (c=='>' && lookahead=='=') ||
             (c=='!' && lookahead=='=') ||
+            (c=='+' && lookahead=='=') ||
+            (c=='-' && lookahead=='=') ||
+            (c=='*' && lookahead=='=') ||
+            (c=='/' && lookahead=='=') ||
             (c=='-' && lookahead=='>'))
             return c.toString() + nextChar()
         return c.toString()

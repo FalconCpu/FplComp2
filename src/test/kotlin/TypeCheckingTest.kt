@@ -737,4 +737,38 @@ class TypeCheckingTest {
         runTest(prog,expected)
     }
 
+    @Test
+    fun breakAndContinueTest() {
+        val prog = """
+            fun check(x: String?)
+                var y = ""
+                while true
+                    if x = null
+                        break
+                    y = x
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Function check
+                Declare y String
+                  StringLit "" String
+                While
+                  IntLit 1 Bool
+                  If
+                    IfClause
+                      Compare EQI Bool
+                        Variable x String?
+                        IntLit 0 Null
+                      Break
+                  Assign
+                    Variable y String
+                    Variable x String
+
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+
 }

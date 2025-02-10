@@ -17,6 +17,9 @@ private lateinit var currentFunction : Function
 var pathContext = PathContext()
 var pathContextTrue = PathContext()
 var pathContextFalse = PathContext()
+var pathContextBreak : MutableList<PathContext>? = null    // list of path contexts for break statements
+                                                    // null to indicate not in a loop
+
 
 // ----------------------------------------------------------------------------
 //                       Types
@@ -520,19 +523,24 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
         is AstTopLevel -> error("TopLevel statement should not be in a statement list")
 
         is AstWhile -> {
+            val oldPathContextBreak = pathContextBreak
+            pathContextBreak = mutableListOf<PathContext>()
             val cond = expr.typeCheckBool(scope)
-            val pathContext1 = pathContextFalse
+            if (!(cond is TastIntLiteral && cond.value==0) ) // unless we have a 'while true'
+                pathContextBreak!! += pathContextFalse       // then add a path context for terminating the loop
             pathContext = pathContextTrue
             val ret = TastWhile(location, cond, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
-            pathContext = pathContext1
-            if (cond is TastIntLiteral && cond.value!=0)  // Check for while(true)... makes path unreachable
-                pathContext = pathContext.setUnreachable()
+
+            pathContext = pathContextBreak!!.merge()    // path context is merge of condition fallthrough and any break statements in the loop
+            pathContextBreak = oldPathContextBreak      // restore the break context
             ret
         }
 
         is AstRepeat -> {
+            val oldPathContextBreak = pathContextBreak
+            pathContextBreak = mutableListOf()
             val pathContext0 = pathContext
             val cond = expr.typeCheckBool(scope)
             val pathContext1 = pathContextTrue
@@ -541,8 +549,10 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
             pathContext = pathContext1
-            if (cond.isCompileTimeConstant() && cond.getCompileTimeConstant()==0)  // Check for while(true)... makes path unreachable
-                pathContext = pathContext.setUnreachable()
+            if (!(cond.isCompileTimeConstant() && cond.getCompileTimeConstant()==0))  // if the loop can terminate then add the fallthrough context
+                pathContextBreak!! += pathContext
+            pathContext = pathContextBreak!!.merge()
+            pathContextBreak = oldPathContextBreak
             ret
         }
 
@@ -556,10 +566,22 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             TastAssign(location, lhs, rhs)
         }
 
+        is AstCompoundAssign -> {
+            val rhs = rhs.typeCheckRvalue(scope)
+            val lhs = lhs.typeCheckLvalue(scope)
+            rhs.checkType(lhs.type)
+            if (rhs.type == RealType)
+                TODO("Real type not yet supported")
+            else if (!rhs.type.isIntegerType())
+                Log.error(location, "Invalid type for compound assignment")
+            TastCompoundAssign(location, op, lhs, rhs)
+        }
+
         is AstFunction -> {
             val ret = TastFunction(location, symbolTable, function)
             val oldFunction = currentFunction
             val oldPathContext = pathContext
+            pathContextBreak = null
             currentFunction = function
             for(stmt in statements)
                 ret.add(stmt.typeCheck(symbolTable))
@@ -620,6 +642,8 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
         }
 
         is AstForRange -> {
+            val oldPathContextBreak = pathContextBreak
+            pathContextBreak = mutableListOf()
             val from = from.typeCheck(scope)
             val to = to.typeCheck(scope)
             from.checkType(IntType)
@@ -629,10 +653,15 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val ret = TastForRange(location, sym, from, to, comparator, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
+            pathContextBreak!! += pathContext
+            pathContext = pathContextBreak!!.merge()
+            pathContextBreak = oldPathContextBreak
             ret
         }
 
         is AstForArray -> {
+            val oldPathContextBreak = pathContextBreak
+            pathContextBreak = mutableListOf()
             val array = expr.typeCheck(scope)
             val elementType = when(array.type) {
                 is ArrayType -> array.type.elementType
@@ -646,6 +675,9 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val ret = TastForArray(location, sym, array, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
+            pathContextBreak!! += pathContext
+            pathContext = pathContextBreak!!.merge()
+            pathContextBreak = oldPathContextBreak
             ret
         }
 
@@ -680,6 +712,7 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val ret = TastClass(location,symbolTable,constructor)
             val oldFunction = currentFunction
             currentFunction = constructor
+            pathContextBreak = null
             // Add code to assign fields defined in parameter list
             for((index,param) in params.parameters.withIndex())
                 if (param.kind!=TokenKind.EOL) {
@@ -714,6 +747,24 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             else {
                 TastWhen(location, expr, emptyList())
             }
+        }
+
+        is AstBreakStatement -> {
+            if (pathContextBreak==null)
+                Log.error(location, "Break statement outside of loop")
+            else {
+                pathContextBreak!! += pathContext
+                pathContext = pathContext.setUnreachable()
+            }
+            TastBreak(location)
+        }
+
+        is AstContinueStatement -> {
+            if (pathContextBreak==null)
+                Log.error(location, "Continue statement outside of loop")
+            else
+                pathContext = pathContext.setUnreachable()
+            TastContinue(location)
         }
     }
 }

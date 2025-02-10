@@ -14,6 +14,8 @@ sealed class Type(private val name:String) {
         return false
     }
 
+    fun isIntegerType() = this == IntType || this== CharType || this== ErrorType
+
     fun checkType(expression: TastExpression) {
         if (!isAssignableFrom(expression.type))
             Log.error(expression.location, "Type mismatch. Expected ${this}, but found ${expression.type}")

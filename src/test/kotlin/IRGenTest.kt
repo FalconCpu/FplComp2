@@ -124,6 +124,7 @@ class IRGenTest {
             MULI #9, #8, 4
             ADDI #10, hwregs, #9
             ST4 #7, #10[0]
+            @4:
             ADDI i, i, 1
             @2:
             BLTI i, #3, @1
@@ -228,6 +229,7 @@ class IRGenTest {
             MULI #4, i, 4
             ADDI #5, array, #4
             ST4 i, #5[0]
+            @4:
             ADDI i, i, 1
             @2:
             BLTI i, #3, @1

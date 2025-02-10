@@ -19,13 +19,14 @@ Done:
    string concatenation
    string comparison ops
    when statement
+   break / continue
 
 ShortTerm:
    += -= etc
    named constants
    enum
-   break / continue
    not operator
+   type refinement for members
 
 Medium term:
    splat operator
