@@ -243,6 +243,10 @@ sealed class Tast(val location: Location) {
             is TastContinue -> {
                 sb.append("Continue\n")
             }
+
+            is TastNullStatement -> {
+                sb.append("NullStatement\n")
+            }
         }
     }
 }
@@ -299,6 +303,7 @@ class TastBreak(location: Location) : TastStatement(location)
 class TastContinue(location: Location) : TastStatement(location)
 class TastWhen(location: Location, val expr: TastExpression, val clauses:List<TastWhenClause>) : TastStatement(location)
 class TastWhenString(location: Location, val expr: TastExpression, val clauses:List<TastWhenClauseString>) : TastStatement(location)
+class TastNullStatement(location: Location) : TastStatement(location)
 
 class TastDeclareField(location: Location, val symbol: FieldSymbol, val expr: TastExpression?) : TastStatement(location)
 

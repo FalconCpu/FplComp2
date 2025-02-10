@@ -309,6 +309,17 @@ class Parser(private val lexer: Lexer) {
         block.add(AstDeclareVar(tok.location, tok.kind, id, optType, optInit))
     }
 
+    private fun parseConstDecl(block:AstBlock) {
+        val tok = nextToken()
+        val id = parseIdentifier()
+        val optType = parseOptType()
+        expect(EQ)
+        val optInit = parseExpression()
+        expectEol()
+        block.add(AstConstStatement(tok.location, id.name, optType, optInit))
+    }
+
+
     private fun parseGlobalVarDecl(block:AstBlock) {
         val tok = nextToken()
         val id = parseIdentifier()
@@ -623,6 +634,7 @@ class Parser(private val lexer: Lexer) {
             DELETE -> parseDelete(block)
             BREAK -> parseBreakStatement(block)
             CONTINUE -> parseContinueStatement(block)
+            CONST -> parseConstDecl(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
@@ -647,6 +659,7 @@ class Parser(private val lexer: Lexer) {
             VAL -> parseGlobalVarDecl(block)
             FUN -> parseFunction(block)
             CLASS -> parseClass(block)
+            CONST -> parseConstDecl(block)
             WHILE -> throw ParseError(lookahead.location, "While statements are not allowed at top level")
             RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed at top level")
             FOR -> throw ParseError(lookahead.location, "For statements are not allowed at top level")

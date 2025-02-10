@@ -68,6 +68,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     UNTIL("until", false),
     BREAK("break", false),
     CONTINUE("continue", false),
+    CONST("const", false),
     RETURN("return", false),
     FUN("fun", false),
     CLASS("class", false),

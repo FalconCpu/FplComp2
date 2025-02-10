@@ -158,9 +158,17 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 is VarSymbol -> TastVariable(location, sym,
                     if (allowRefinedType) pathContext.getType(sym) else sym.type)
                 is UndefinedSymbol -> error("Got undefined symbol in type checking")
-                is ConstantSymbol -> TastIntLiteral(location, sym.value, sym.type)
+                is ConstantSymbol -> when(sym.type) {
+                    is BoolType,
+                    is CharType,
+                    is NullType,
+                    is IntType -> TastIntLiteral(location, sym.value as Int, sym.type)
+                    is StringType -> TastStringLiteral(location, sym.value as String)
+                    else -> error("Unhandled constant type: ${sym.type}")
+                }
                 is GlobalVarSymbol -> TastGlobalVariable(location, sym,
-                    if (allowRefinedType) pathContext.getType(sym) else sym.type)
+                if (allowRefinedType) pathContext.getType(sym) else sym.type)
+
             }
         }
 
@@ -765,6 +773,26 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             else
                 pathContext = pathContext.setUnreachable()
             TastContinue(location)
+        }
+
+        is AstConstStatement -> {
+            val expr = value.typeCheckRvalue(scope)
+            val type = astType?.resolveType(scope) ?: expr.type
+            expr.checkType(type)
+
+            val value = if (expr.type== ErrorType) 0
+                else when (expr) {
+                is TastIntLiteral -> expr.value
+                is TastStringLiteral -> expr.value
+                else -> {
+                    Log.error(location, "Expression is not compile time constant")
+                    0
+                }
+            }
+
+            val sym = ConstantSymbol(location, name, type, value)
+            scope.add(sym)
+            TastNullStatement(location)
         }
     }
 }

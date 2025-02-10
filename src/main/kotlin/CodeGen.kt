@@ -581,7 +581,11 @@ fun TastStatement.codeGen() {
             val rhs = rhs.codeGen()
             lhs.codeGenLvalueOperator(op,rhs)
         }
+
+        is TastNullStatement -> {}
     }
+
+
 }
 
 // ---------------------------------------------------------------------------

@@ -257,6 +257,11 @@ sealed class AstNode (val location:Location) {
             is AstContinueStatement -> {
                 sb.append("Continue\n")
             }
+
+            is AstConstStatement -> {
+                sb.append("Const $name\n")
+                value.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -320,6 +325,7 @@ class AstDeleteStatement(location: Location, val expr: AstExpression) : AstState
 class AstWhenStatement(location: Location, val expr: AstExpression, val clauses:List<AstWhenClause>) : AstStatement(location)
 class AstBreakStatement(location: Location) : AstStatement(location)
 class AstContinueStatement(location: Location) : AstStatement(location)
+class AstConstStatement(location: Location, val name: String, val astType: AstType?,  val value: AstExpression) : AstStatement(location)
 
 
 // Block classes

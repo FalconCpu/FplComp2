@@ -20,10 +20,10 @@ Done:
    string comparison ops
    when statement
    break / continue
-
-ShortTerm:
    += -= etc
    named constants
+
+ShortTerm:
    enum
    not operator
    type refinement for members

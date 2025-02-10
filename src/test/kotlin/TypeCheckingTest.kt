@@ -770,5 +770,40 @@ class TypeCheckingTest {
         runTest(prog,expected)
     }
 
+    @Test
+    fun badConstDeclaration() {
+        val prog = """
+            fun foo() -> Int
+                return 42
 
+            fun main() 
+                # Invalid: Non-constant expression
+                const A = foo()  # ERROR: Cannot assign non-constant expression to a const
+
+                # Invalid: Type mismatch
+                const B: Int = "hello"  # ERROR: Type mismatch (expected Int, got String)
+
+                # Invalid: Undefined identifier
+                const C = D + 1  # ERROR: D is not defined
+
+                # Invalid: Modifying a const
+                const X = 10
+                X = 20  # ERROR: Cannot assign to a const variable
+
+                # Invalid: Const inside a non-global scope assigned from a non-const
+                var y = 5
+                const Z = y * 2  # ERROR: y is not a compile-time constant
+
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:6.5: Expression is not compile time constant
+            input.fpl:9.20: Type mismatch: expected Int but got String
+            input.fpl:12.15: Undefined variable: 'D'
+            input.fpl:16.5: Expression is not an lvalue
+            input.fpl:20.5: Expression is not compile time constant
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
 }

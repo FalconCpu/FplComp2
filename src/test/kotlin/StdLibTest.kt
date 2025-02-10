@@ -476,5 +476,31 @@ class StdLibTest {
 
         runTest(prog,expected)
     }
+
+    @Test
+    fun constTest() {
+        val prog = """
+            const MILLION = 1000000
+            const GREETING = "Hello, world!"
+            
+            fun main()
+                printf("MILLION: %d\n", MILLION) 
+                printf("%s\n", GREETING)
+            
+                const X = 42
+                const Y = X + 8
+                printf("Y: %d\n", Y)  # Should print "Y: 50"
+        """.trimIndent()
+
+        val expected = """
+            MILLION: 1000000
+            Hello, world!
+            Y: 50
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
 }
 
