@@ -502,5 +502,30 @@ class StdLibTest {
         runTest(prog, expected)
     }
 
+    @Test
+    fun notTest() {
+        val prog = """
+            class Cat(val name:String, val age:Int)
+            
+            fun foo(x:Cat?)
+                if not(x=null)
+                    printf("Cat name: %s\n", x.name)
+                else
+                    printf("Cat is null\n")
+            
+            fun main()
+                val c = local Cat("Whiskers", 3)
+                foo(c)
+                foo(null)
+        """.trimIndent()
+
+        val expected = """
+            Cat name: Whiskers
+            Cat is null
+            
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
 }
 

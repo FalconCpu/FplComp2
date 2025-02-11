@@ -126,6 +126,11 @@ fun TastExpression.codeGen() : IRVal {
             currentFunc.addLabel(labelEnd)
             ret
         }
+
+        is TastNot -> {
+            val e = expr.codeGen()
+            currentFunc.addAlu(AluOp.XORI, e, 1)
+        }
     }
 }
 
@@ -219,6 +224,9 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
             currentFunc.addLabel(label)
             right.codeGenBool(labelTrue, labelFalse)
         }
+
+        is TastNot ->
+            expr.codeGenBool(labelFalse, labelTrue)
 
         else -> {
             val e = codeGen()

@@ -262,6 +262,12 @@ sealed class AstNode (val location:Location) {
                 sb.append("Const $name\n")
                 value.dump(indent+1, sb)
             }
+
+            is AstEnum -> {
+                sb.append("Enum $name\n")
+                for(member in members)
+                    member.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -345,6 +351,10 @@ class AstFunction(location: Location, val name:String, val params: AstParameterL
 class AstClass(location: Location, val name:String, val params: AstParameterList, val klass: ClassType, parent:AstBlock)
     : AstBlock(location, parent) {
         lateinit var constructor: Function
+}
+
+class AstEnum(location: Location, val name:String, val klass:EnumType, val members: List<AstIdentifier>, parent:AstBlock)
+    : AstBlock(location, parent) {
 }
 
 class AstWhile(location: Location, val expr: AstExpression, parent:AstBlock) : AstBlock(location, parent)

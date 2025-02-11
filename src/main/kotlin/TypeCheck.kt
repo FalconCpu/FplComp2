@@ -255,33 +255,17 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
         }
 
         is AstMember -> {
-            val expr = expr.typeCheckRvalue(scope)
-            if ((expr.type is StringType || expr.type is ArrayType) && name == "length")
+            val expr = expr.typeCheck(scope)
+            if (expr is TastTypeDescriptor)
+                staticMember(expr.type)
+            else if (expr.type is ClassType)
+                instanceMember(expr, expr.type)
+            else if (expr.type is NullableType && expr.type.elementType is ClassType) {
+                Log.error(location, "Value may be null")
+                instanceMember(expr, expr.type.elementType)
+            } else if ((expr.type is StringType || expr.type is ArrayType) && name == "length")
                 TastMember(location, expr, lengthSymbol, IntType)
-
-            else if (expr.type is ClassType) {
-                val sym = expr.type.lookup(name) ?:
-                    FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"),false)
-                if (sym is FieldSymbol)
-                    TastMember(location, expr, sym, sym.type)
-                else if (sym is FunctionSymbol)
-                    TastMethodLiteral(location, sym.function, expr, sym.type)
-                else
-                    TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
-
-            } else if (expr.type is NullableType && expr.type.elementType is ClassType) {
-                    Log.error(location,"Value may be null")
-                    val sym = expr.type.elementType.lookup(name) ?:
-                    FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"), false)
-
-                if (sym is FieldSymbol)
-                    TastMember(location, expr, sym, sym.type)
-                else if (sym is FunctionSymbol)
-                    TastFunctionLiteral(location, sym.function, sym.type)
-                else
-                    TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
-
-            } else if (expr.type== ErrorType)
+            else if (expr.type== ErrorType)
                 expr
             else
                 TastError(location,"Got type '${expr.type}' when expecting class")
@@ -333,6 +317,37 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             elseExpr.checkType(thenExpr.type)
             TastIfExpression(location, cond, thenExpr, elseExpr, thenExpr.type)
 
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+//                        Extract Fields
+// -----------------------------------------------------------------------------
+
+private fun AstMember.instanceMember(expr:TastExpression, klass:ClassType) : TastExpression {
+    val sym = klass.lookup(name) ?:
+        FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"),false)
+    return when(sym) {
+        is FieldSymbol ->  TastMember(location, expr, sym, sym.type)
+        is FunctionSymbol -> TastMethodLiteral(location, sym.function, expr, sym.type)
+        else ->              TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
+    }
+}
+
+private fun AstMember.staticMember(type:Type) : TastExpression {
+    return when (type) {
+        is EnumType -> {
+            val sym = type.lookup(name) ?:
+                ConstantSymbol(location,name,makeErrorType(location, "Enum has no field named '$name'"),0)
+            return when (sym) {
+                is ConstantSymbol -> TastIntLiteral(location, sym.value as Int, type)
+                else -> TastError(location, "Got type ${sym.javaClass} in AstMember symbol")
+            }
+        }
+
+        else -> {
+            TastError(location, "Got type '$type' when expecting class")
         }
     }
 }
@@ -474,11 +489,15 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
                 val tmp = pathContextTrue
                 pathContextTrue = pathContextFalse
                 pathContextFalse = tmp
-                ret
+                TastNot(location, ret, BoolType)
+            } else if (op == TokenKind.MINUS){
+                val e = typeCheckRvalue(scope)
+                if (e.type.isIntegerType())
+                    TastBinaryOp(location, AluOp.SUBI, TastIntLiteral(location, 0, IntType), e, e.type)
+                else
+                    TastError(location, "Unary minus is only defined for integer types")
             } else {
-                val ret = typeCheckRvalue(scope)
-                ret.checkType(BoolType)
-                ret
+                error("Unknown unary operator")
             }
         }
 
@@ -748,12 +767,18 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
 
         is AstWhenStatement -> {
             val expr = expr.typeCheckRvalue(scope)
-            return if (expr.type is IntType)
-                TastWhen(location, expr, extractWhenClausesInt(expr.type, scope))
-            else if (expr.type is StringType)
-                TastWhenString(location, expr, extractWhenClausesString(expr.type, scope))
-            else {
-                TastWhen(location, expr, emptyList())
+            return when (expr.type) {
+                is IntType ->     TastWhen(location, expr, extractWhenClausesInt(expr.type, scope))
+                is StringType ->  TastWhenString(location, expr, extractWhenClausesString(expr.type, scope))
+                is EnumType -> {
+                    val ret = TastWhen(location, expr, extractWhenClausesInt(expr.type, scope))
+                    ret.checkCompleteness()
+                    ret
+                }
+                else -> {
+                    Log.error(expr.location,"Got type '${expr.type}' when expecting Int, String or Enum")
+                    TastWhen(location, expr, emptyList())
+                }
             }
         }
 
@@ -792,6 +817,10 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
 
             val sym = ConstantSymbol(location, name, type, value)
             scope.add(sym)
+            TastNullStatement(location)
+        }
+
+        is AstEnum -> {
             TastNullStatement(location)
         }
     }
@@ -870,6 +899,17 @@ fun AstWhenStatement.extractWhenClausesString(exprType:Type, scope: SymbolTable)
     }
     pathContext = pathContextOut.merge()
     return tastClauses
+}
+
+private fun TastWhen.checkCompleteness() {
+    if (expr.type !is EnumType)
+        return
+    if (clauses.any{it.isElse})
+        return
+    for(case in expr.type.fields) {
+        if (clauses.none{it.values.contains(case.value)})
+            Log.error(location, "No case defined for '$case'")
+    }
 }
 
 

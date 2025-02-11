@@ -174,7 +174,7 @@ class Parser(private val lexer: Lexer) {
         if (canTake(MINUS) )
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NOT))
-            return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
+            return AstUnaryOp(lookahead.location, NOT, parsePrefix())
         if (lookahead.kind==NEW || lookahead.kind==LOCAL)
             return parseNew()
         return parsePostfix()
@@ -606,6 +606,33 @@ class Parser(private val lexer: Lexer) {
         parseOptionalEnd(CLASS)
     }
 
+    private fun parseEnumBody() : List<AstIdentifier> {
+        val ret = mutableListOf<AstIdentifier>()
+        expect(INDENT)
+        while (lookahead.kind != DEDENT && lookahead.kind != EOF) {
+            val id = parseIdentifier()
+            expectEol()
+            ret.add(id)
+        }
+        expect(DEDENT)
+        return ret
+    }
+
+    private fun parseEnum(block: AstBlock) {
+        expect(ENUM)
+        val id = parseIdentifier()
+        expectEol()
+        val body = parseEnumBody()
+        parseOptionalEnd(ENUM)
+        val type = EnumType.make(id.name, body)
+        val ret = AstEnum(id.location, id.name, type, body, block)
+        val typeSym = TypeSymbol(id.location, id.name, type)
+        block.symbolTable.add(typeSym)
+        block.add(ret)
+
+    }
+
+
     private fun parseBreakStatement(block: AstBlock) {
         val loc = expect(BREAK)
         expectEol()
@@ -637,6 +664,7 @@ class Parser(private val lexer: Lexer) {
             CONST -> parseConstDecl(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             FUN -> throw ParseError(lookahead.location, "Function declarations are not allowed to nest")
+            ENUM -> throw ParseError(lookahead.location, "Enum declarations are not allowed to nest")
             else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
         }
     }
@@ -660,6 +688,7 @@ class Parser(private val lexer: Lexer) {
             FUN -> parseFunction(block)
             CLASS -> parseClass(block)
             CONST -> parseConstDecl(block)
+            ENUM -> parseEnum(block)
             WHILE -> throw ParseError(lookahead.location, "While statements are not allowed at top level")
             RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed at top level")
             FOR -> throw ParseError(lookahead.location, "For statements are not allowed at top level")

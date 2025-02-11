@@ -247,6 +247,11 @@ sealed class Tast(val location: Location) {
             is TastNullStatement -> {
                 sb.append("NullStatement\n")
             }
+
+            is TastNot -> {
+                sb.append("Not\n")
+                expr.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -282,6 +287,7 @@ class TastConstructor(location: Location, val args:List<TastExpression>, val isL
 class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
 class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
+class TastNot(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
     init {

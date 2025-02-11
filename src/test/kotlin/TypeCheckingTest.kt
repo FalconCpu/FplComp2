@@ -806,4 +806,73 @@ class TypeCheckingTest {
 
         runTest(prog,expected)
     }
+
+    @Test
+    fun enumTest() {
+        val prog = """
+            enum Color
+                 Red
+                 Green
+                 Blue
+                
+            fun foo(c:Color) -> Int     
+                 when(c)
+                    Color.Red -> return 1
+                    Color.Green -> return 2
+                    Color.Blue -> return 3                
+                 
+            fun main()
+                foo(Color.Red)
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              NullStatement
+              Function foo
+                When
+                  Variable c Color
+                  WhenClause [0]
+                    Return
+                      IntLit 1 Int
+                  WhenClause [1]
+                    Return
+                      IntLit 2 Int
+                  WhenClause [2]
+                    Return
+                      IntLit 3 Int
+              Function main
+                ExpressionStatement
+                  FunctionCall (Int)
+                    FunctionLiteral foo
+                    IntLit 0 Color
+            
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun enumMissingCaseTest() {
+        val prog = """
+            enum Color
+                 Red
+                 Green
+                 Blue
+                
+            fun foo(c:Color) -> Int     
+                 when(c)
+                    Color.Red -> return 1
+                    Color.Green -> return 2
+                 
+            fun main()
+                foo(Color.Red)
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:7.11: No case defined for 'Blue'
+        """.trimIndent()
+
+        runTest(prog,expected)
+    }
+
 }

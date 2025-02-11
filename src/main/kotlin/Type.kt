@@ -32,12 +32,12 @@ sealed class Type(private val name:String) {
         UnitType -> 0
         NullType -> 4
         AnyType -> 4
+        is EnumType -> 4
         is ArrayType -> 4
         is FunctionType -> 4
         is NullableType -> 4
         is ClassType -> 4
     }
-
 }
 
 object AnyType       : Type("Any")
@@ -136,6 +136,27 @@ class FunctionType(val parameterTypes: List<Type>, val isVariadic:Boolean, val r
         fun make(parameterTypes: List<Type>, isVariadic: Boolean, returnType: Type): FunctionType {
             return allFunctionTypes.find{it.parameterTypes==parameterTypes && it.returnType==returnType} ?:
                 FunctionType(parameterTypes, isVariadic, returnType).also { allFunctionTypes.add(it) }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+//                       Enum Types
+// ----------------------------------------------------------------------------
+
+class EnumType(name:String) : Type(name) {
+    val fields = mutableListOf<ConstantSymbol>()
+
+    fun lookup(name: String): Symbol? {
+        return fields.find { it.name == name }
+    }
+
+    companion object {
+        fun make(name: String, body:List<AstIdentifier>): EnumType {
+            val ret = EnumType(name)
+            for ((index,id) in body.withIndex())
+                ret.fields += ConstantSymbol(id.location, id.name, ret, index)
+            return ret
         }
     }
 }

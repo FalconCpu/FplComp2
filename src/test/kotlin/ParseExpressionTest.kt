@@ -119,7 +119,7 @@ class ParseExpressionTest {
     fun unaryNot() {
         val expression = "not(a=b)"
         val expected = """
-            UnaryOp MINUS
+            UnaryOp NOT
               Equals EQ
                 Identifier a
                 Identifier b
