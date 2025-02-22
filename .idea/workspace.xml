@@ -4,18 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Named constants implemented">
+    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Enums implemented">
+      <change afterPath="$PROJECT_DIR$/src/test/kotlin/SubclassTest.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/AST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/AST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Function.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Function.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/PathContext.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/PathContext.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Symbol.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Symbol.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TODO" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Type.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Type.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/kotlin/ParseExpressionTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/ParseExpressionTest.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/TypeCheckingTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/PathContextTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/PathContextTest.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,6 +115,9 @@
     "Gradle.StdLibTest.printfTest.executor": "Run",
     "Gradle.StdLibTest.stringComparisonsTest.executor": "Run",
     "Gradle.StdLibTest.whenStatementTest.executor": "Run",
+    "Gradle.SubclassTest.manyFields.executor": "Run",
+    "Gradle.SubclassTest.superclassArgs.executor": "Run",
+    "Gradle.SubclassTest.virtualMethod.executor": "Run",
     "Gradle.Tests in 'fpl.test'.executor": "Run",
     "Gradle.TypeCheckingTest.nullValues.executor": "Run",
     "Gradle.TypeCheckingTest.variadicArgs.executor": "Run",
@@ -152,79 +161,7 @@
       <recent name="falcon" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.Tests in 'fpl.test'">
-    <configuration name="StdLibTest.forLoopArrayTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;falcon.StdLibTest.forLoopArrayTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="StdLibTest.newStringTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;falcon.StdLibTest.newStringTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
-    <configuration name="StdLibTest.stringComparisonsTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
-      <ExternalSystemSettings>
-        <option name="executionName" />
-        <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="externalSystemIdString" value="GRADLE" />
-        <option name="scriptParameters" value="" />
-        <option name="taskDescriptions">
-          <list />
-        </option>
-        <option name="taskNames">
-          <list>
-            <option value=":test" />
-            <option value="--tests" />
-            <option value="&quot;falcon.StdLibTest.stringComparisonsTest&quot;" />
-          </list>
-        </option>
-        <option name="vmOptions" />
-      </ExternalSystemSettings>
-      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
-      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
-      <DebugAllEnabled>false</DebugAllEnabled>
-      <RunAsTest>true</RunAsTest>
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Gradle.SubclassTest.manyFields">
     <configuration name="StdLibTest.whenStatementTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -239,6 +176,78 @@
             <option value=":test" />
             <option value="--tests" />
             <option value="&quot;falcon.StdLibTest.whenStatementTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="SubclassTest.manyFields" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;falcon.SubclassTest.manyFields&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="SubclassTest.superclassArgs" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;falcon.SubclassTest.superclassArgs&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="SubclassTest.virtualMethod" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;falcon.SubclassTest.virtualMethod&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -272,19 +281,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Gradle.StdLibTest.forLoopArrayTest" />
-      <item itemvalue="Gradle.StdLibTest.newStringTest" />
-      <item itemvalue="Gradle.StdLibTest.stringComparisonsTest" />
+      <item itemvalue="Gradle.SubclassTest.manyFields" />
+      <item itemvalue="Gradle.SubclassTest.superclassArgs" />
+      <item itemvalue="Gradle.SubclassTest.virtualMethod" />
       <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
       <item itemvalue="Gradle.Tests in 'fpl.test'" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.SubclassTest.manyFields" />
         <item itemvalue="Gradle.Tests in 'fpl.test'" />
+        <item itemvalue="Gradle.SubclassTest.virtualMethod" />
+        <item itemvalue="Gradle.SubclassTest.superclassArgs" />
         <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
-        <item itemvalue="Gradle.StdLibTest.stringComparisonsTest" />
-        <item itemvalue="Gradle.StdLibTest.newStringTest" />
-        <item itemvalue="Gradle.StdLibTest.forLoopArrayTest" />
       </list>
     </recent_temporary>
   </component>
@@ -425,8 +434,27 @@
       <option name="project" value="LOCAL" />
       <updated>1739199445130</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Enums implemented">
+      <option name="closed" value="true" />
+      <created>1739238879564</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1739238879564</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Basic functions of compiler now working" />
@@ -445,7 +473,8 @@
     <MESSAGE value="when statements" />
     <MESSAGE value="+= -+ *= and /= operators now implemented" />
     <MESSAGE value="Named constants implemented" />
-    <option name="LAST_COMMIT_MESSAGE" value="Named constants implemented" />
+    <MESSAGE value="Enums implemented" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enums implemented" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fpl$LexerTest.ic" NAME="LexerTest Coverage Results" MODIFIED="1736365430595" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />

@@ -25,7 +25,10 @@ object DataSegment {
         val nameRef = getStringRef(nameString)
         sb.append("Class/$nameString:\n");
         sb.append("dcw $nameRef\n")
-        sb.append("dcw $classSize\n\n")
+        sb.append("dcw $classSize\n")
+        for(vm in virtualMethods)
+            sb.append("dcw /${vm.function.name}\n")
+        sb.append("\n")
     }
 
     fun output(sb:StringBuilder) {
@@ -45,6 +48,7 @@ object DataSegment {
                         (if (c.length > 3) (c[3].code shl 24) else 0)
                 sb.append("dcw $data\n")
             }
+            sb.append("\n")
         }
     }
 }

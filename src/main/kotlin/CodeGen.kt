@@ -620,13 +620,23 @@ fun TastFunction.codeGen() {
 // ---------------------------------------------------------------------------
 
 fun TastClass.codeGen() {
-    currentFunc = constructor
+    currentFunc = klass.constructor
     currentFunc.add( InstrStart())
     var regIndex = 1
-    check(constructor.thisSymbol!=null)
-    currentFunc.addMov(constructor.mapSymbol(constructor.thisSymbol), machineRegs[regIndex++])
-    for(param in constructor.parameters)
-        currentFunc.addMov(constructor.mapSymbol(param), machineRegs[regIndex++])
+    check(currentFunc.thisSymbol!=null)
+    currentFunc.addMov(currentFunc.mapSymbol(currentFunc.thisSymbol!!), machineRegs[regIndex++])
+    for(param in currentFunc.parameters)
+        currentFunc.addMov(currentFunc.mapSymbol(param), machineRegs[regIndex++])
+
+    // Generate call for superclass constructor
+    if (klass.superClass!=null) {
+        val superConstructor = klass.superClass.constructor
+        val numParams = superConstructor.parameters.size
+        val thisExpr = currentFunc.mapSymbol(currentFunc.thisSymbol!!)
+        val numRegs = codeGenFuncArgs(superclassConstructorArgs, numParams, currentFunc.isVararg, thisExpr)
+        currentFunc.addCall(superConstructor, numRegs)
+    }
+
     for(statement in statements)
         statement.codeGen()
     currentFunc.addLabel( currentFunc.retLabel)

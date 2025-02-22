@@ -22,14 +22,16 @@ Done:
    break / continue
    += -= etc
    named constants
-
-ShortTerm:
    enum
    when(enum) check for complete coverage
    not operator
+
+ShortTerm:
    type refinement for members
    static fields in classes
    static methods
+   ?: operator
+   ?. operator
 
 Medium term:
    splat operator

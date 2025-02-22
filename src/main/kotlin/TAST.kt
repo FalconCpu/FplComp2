@@ -1,11 +1,39 @@
 package falcon
 
+private val fieldAccessSymbols = mutableMapOf<Pair<Symbol, FieldSymbol>, FieldAccessSymbol> ()
+
+fun getFieldAccessSymbol(lhs: Symbol, rhs: FieldSymbol) : Symbol? {
+    return if (!lhs.mutable && !rhs.mutable)
+        fieldAccessSymbols.getOrPut( lhs to rhs ) { FieldAccessSymbol(lhs.location, lhs, rhs, rhs.type, false) }
+    else
+        null
+}
+
+fun getFieldAccessSymbol(lhs: TastExpression, rhs:FieldSymbol) : Symbol? {
+    val sym = lhs.getSymbol()
+    return if (sym != null)
+        getFieldAccessSymbol(sym, rhs)
+    else
+        null
+}
+
 // ----------------------------------------------------------------------------
 //                       Type-Aware Syntax Trees
 // ----------------------------------------------------------------------------
 // This is the AST with type information.
 
 sealed class Tast(val location: Location) {
+    fun getSymbol() : Symbol? = when (this) {
+        is TastVariable -> symbol
+        is TastGlobalVariable -> symbol
+        is TastMember -> {
+            val lhsSym = expr.getSymbol() ?: return null
+            fieldAccessSymbols.getOrPut( lhsSym to member ) { FieldAccessSymbol(location, lhsSym, member, member.type, false) }
+        }
+        else -> null
+    }
+
+
     fun dump(indent: Int, sb: StringBuilder) {
         sb.append("  ".repeat(indent))
         when (this) {
@@ -67,7 +95,7 @@ sealed class Tast(val location: Location) {
             }
 
             is TastClass -> {
-                sb.append("Class ${constructor.name}\n")
+                sb.append("Class $klass\n")
                 for (stmt in statements)
                     stmt.dump(indent + 1, sb)
             }
@@ -281,13 +309,16 @@ class TastCast(location: Location, val expr: TastExpression, type: Type) : TastE
 class TastIndex(location: Location, val expr: TastExpression, val index: TastExpression, type:Type) : TastExpression(location, type)
 class TastFunctionCall(location: Location, val func: TastExpression, val args: List<TastExpression>, type:Type) : TastExpression(location, type)
 class TastMethodCall(location: Location, val func: TastExpression, val args: List<TastExpression>, val thisExpr:TastExpression, type:Type) : TastExpression(location, type)
-class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type) : TastExpression(location, type)
 class TastTypeDescriptor(location: Location, type:Type) : TastExpression(location,type)
 class TastConstructor(location: Location, val args:List<TastExpression>, val isLocal:Boolean, type:Type) : TastExpression(location,type)
 class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
 class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
 class TastNot(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
+
+class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type)
+    : TastExpression(location, type)
+
 
 class TastError(location: Location, message: String) : TastExpression(location, ErrorType) {
     init {
@@ -360,5 +391,5 @@ class TastWhenClauseString(location: Location, val values: List<String>, val isE
     : TastBlock(location, symbolTable)
 
 
-class TastClass(location: Location, symbolTable: SymbolTable, val constructor: Function)
+class TastClass(location: Location, symbolTable: SymbolTable, val klass: ClassType, val superclassConstructorArgs:List<TastExpression>)
     : TastBlock(location, symbolTable)

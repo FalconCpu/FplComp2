@@ -343,14 +343,15 @@ class AstTopLevel() : AstBlock(Location.nullLocation, null) {
     }
 }
 
-class AstFunction(location: Location, val name:String, val params: AstParameterList, val retType:AstType?, parent:AstBlock)
+class AstFunction(location: Location, val name:String, val params: AstParameterList, val retType:AstType?, val qualifiers:Set<TokenKind>, parent:AstBlock)
     : AstBlock(location, parent) {
         lateinit var function: Function
 }
 
-class AstClass(location: Location, val name:String, val params: AstParameterList, val klass: ClassType, parent:AstBlock)
+class AstClass(location: Location, val name:String, val params: AstParameterList, val klass: ClassType, val superclass: AstConstructor?, parent:AstBlock)
     : AstBlock(location, parent) {
         lateinit var constructor: Function
+        val constructorSymbolTable = SymbolTable(symbolTable)
 }
 
 class AstEnum(location: Location, val name:String, val klass:EnumType, val members: List<AstIdentifier>, parent:AstBlock)

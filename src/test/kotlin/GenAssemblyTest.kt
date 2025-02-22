@@ -142,9 +142,11 @@ class GenAssemblyTest {
             string_0: # Fluffy
             dcw 1718971462
             dcw 31078
+            
             dcw 3
             string_1: # Cat
             dcw 7627075
+            
             
         """.trimIndent()
 

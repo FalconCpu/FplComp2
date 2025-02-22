@@ -7,7 +7,6 @@ package falcon
 
 private lateinit var currentFunction : Function
 
-
 // ----------------------------------------------------------------------------
 //                       Path Dependant Types
 // ----------------------------------------------------------------------------
@@ -39,6 +38,7 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
                 is UndefinedSymbol -> error("Undefined symbol")
                 is ConstantSymbol -> makeErrorType(location, "Type '$name' is a constant not a type")
                 is GlobalVarSymbol -> makeErrorType(location, "Type '$name' is a global variable not a type")
+                is FieldAccessSymbol -> error("Got a field access symbol when resolving type")
             }
         }
 
@@ -167,8 +167,9 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                     else -> error("Unhandled constant type: ${sym.type}")
                 }
                 is GlobalVarSymbol -> TastGlobalVariable(location, sym,
-                if (allowRefinedType) pathContext.getType(sym) else sym.type)
+                     if (allowRefinedType) pathContext.getType(sym) else sym.type)
 
+                is FieldAccessSymbol -> error("Got field access symbol in expression")
             }
         }
 
@@ -328,11 +329,16 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
 private fun AstMember.instanceMember(expr:TastExpression, klass:ClassType) : TastExpression {
     val sym = klass.lookup(name) ?:
         FieldSymbol(location,name,makeErrorType(location, "Class '${expr.type} has no field named '$name'"),false)
-    return when(sym) {
-        is FieldSymbol ->  TastMember(location, expr, sym, sym.type)
+    val ret =  when(sym) {
+        is FieldSymbol ->  {
+            val fieldAccess = getFieldAccessSymbol(expr, sym)
+            val type = if (fieldAccess!=null) pathContext.getType(fieldAccess) else sym.type
+            TastMember(location, expr, sym, type)
+        }
         is FunctionSymbol -> TastMethodLiteral(location, sym.function, expr, sym.type)
         else ->              TastError(location,"Got type ${sym.javaClass} in AstMember symbol")
     }
+    return ret
 }
 
 private fun AstMember.staticMember(type:Type) : TastExpression {
@@ -736,7 +742,13 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
         }
 
         is AstClass -> {
-            val ret = TastClass(location,symbolTable,constructor)
+            val superclassConstructorArgs = superclass?.args?.map{it.typeCheck(constructorSymbolTable)} ?: emptyList()
+            if (klass.superClass!=null) {
+                val superclassConstructorParams = klass.superClass.constructor.parameters.map { it.type }
+                typeCheckArgList(location, superclassConstructorArgs, superclassConstructorParams, false)
+            }
+
+            val ret = TastClass(location,symbolTable,klass, superclassConstructorArgs)
             val oldFunction = currentFunction
             currentFunction = constructor
             pathContextBreak = null
@@ -938,48 +950,105 @@ private fun AstParameterList.generateSymbols(scope: SymbolTable) : List<VarSymbo
 // and their parameters, adding them to the symbol table. This is done to allow
 // forward references.
 
-private fun AstBlock.identifyFunctions(scope: SymbolTable, klass:ClassType?) {
+private fun AstBlock.identifyFunctions(scope: SymbolTable, parentClass:ClassType?) {
     for (stmt in statements) {
-        if (stmt is AstFunction) {
-            val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
-            val resultType = stmt.retType?.resolveType(scope) ?: UnitType
-            val functionType = FunctionType.make(tcParams.map { it.type }, stmt.params.isVariadic, resultType)
-            val qualName = if (klass==null) stmt.name else "$klass/${stmt.name}"
-            stmt.function = Function(stmt.location, qualName, tcParams, stmt.params.isVariadic, resultType, klass)
-            allFunctions.add(stmt.function)
-            val sym = FunctionSymbol(stmt.location, stmt.name, functionType, stmt.function)
-            tcParams.forEach { stmt.symbolTable.add(it) }
-            scope.add(sym)
-            if (klass!=null) {
-                klass.add(sym)
-                stmt.symbolTable.add(stmt.function.thisSymbol!!)
-            }
-
-        } else if (stmt is AstClass) {
-            val tcParams = stmt.params.generateSymbols(stmt.symbolTable)
-            stmt.constructor =
-                Function(stmt.location, stmt.name, tcParams, stmt.params.isVariadic, UnitType, stmt.klass)
-            stmt.klass.constructor = stmt.constructor
-            allFunctions.add(stmt.constructor)
-            for ((index, param) in tcParams.withIndex()) {
-                if (stmt.params.parameters[index].kind == TokenKind.EOL)
-                    stmt.symbolTable.add(param)
-                else {
-                    val field = FieldSymbol(
-                        param.location,
-                        param.name,
-                        param.type,
-                        (stmt.params.parameters[index].kind == TokenKind.VAR)
-                    )
-                    stmt.klass.add(field)
-                    stmt.symbolTable.add(field)
-                }
-            }
-            stmt.identifyFunctions(stmt.symbolTable, stmt.klass)
-
-        }
+        if (stmt is AstFunction)
+            stmt.identifyFunctionParameters(scope, parentClass)
+        else if (stmt is AstClass)
+            stmt.identifyConstructorParams()
     }
 }
+
+private fun AstClass.identifyConstructorParams() {
+
+    // If the class has a super class, we need to copy the fields and methods from the super class
+    if (klass.superClass!=null) {
+        // Copy the fields from the super class
+        for (field in klass.superClass.fields) {
+            klass.add(field)
+            symbolTable.add(field)
+        }
+
+        for (method in klass.superClass.methods) {
+            klass.add(method)
+            symbolTable.add(method)
+        }
+
+        klass.virtualMethods.addAll(klass.superClass.virtualMethods)
+    }
+
+    // Identify the parameters for the constructor
+    val tcParams = params.generateSymbols(symbolTable)
+    constructor = Function(location, name, tcParams, params.isVariadic, UnitType, klass)
+    klass.constructor = constructor
+    allFunctions.add(constructor)
+    constructorSymbolTable.add(constructor.thisSymbol!!)
+    for (param in tcParams)
+        constructorSymbolTable.add(param)
+    identifyFunctions(symbolTable, klass)
+}
+
+private fun AstFunction.identifyFunctionParameters(scope: SymbolTable, parentClass:ClassType?) {
+    val tcParams = params.generateSymbols(symbolTable)
+    val resultType = retType?.resolveType(scope) ?: UnitType
+    val functionType = FunctionType.make(tcParams.map { it.type }, params.isVariadic, resultType)
+    val qualifiedName = if (parentClass==null) name else "$parentClass/$name"
+    function = Function(location, qualifiedName, tcParams, params.isVariadic, resultType, parentClass)
+    allFunctions.add(function)
+    val sym = FunctionSymbol(location, name, functionType, function)
+    tcParams.forEach { symbolTable.add(it) }
+
+    if (qualifiers.contains(TokenKind.OVERRIDE)) {
+        // Got an override method
+        checkOverride(sym, parentClass)
+
+    } else if (qualifiers.contains(TokenKind.VIRTUAL)) {
+        // Got a virtual method
+        if (parentClass==null)
+            return Log.error(location, "Virtual is only allowed in classes")
+        parentClass.add(sym)
+        scope.add(sym)
+        parentClass.addVirtualMethod(sym)
+
+
+    } else if (parentClass!=null) {
+        // Got a class method
+        scope.add(sym)
+        parentClass.add(sym)
+
+    } else {
+        // Got a global function
+        scope.add(sym)
+    }
+
+    if (function.thisSymbol!=null)
+        symbolTable.add(function.thisSymbol!!)
+}
+
+private fun checkOverride(sym: FunctionSymbol,  parentClass:ClassType?) {
+    if (parentClass==null)
+        return Log.error(sym.location, "Override is only allowed in classes")
+
+    val superFunc = parentClass.methods.find{ it.name == sym.name }
+    if (superFunc==null)
+        return Log.error(sym.location, "No function '$sym' found to override")
+    if (superFunc.function.virtualFunctionNumber==-1)
+        return Log.error(sym.location, "Function '${sym.name}' is not virtual")
+
+    val superParams = superFunc.function.parameters
+    val symParams = sym.function.parameters
+    if (superParams.size != symParams.size)
+        return Log.error(sym.location, "Function '${sym.name}' has a ${symParams.size} parameters but the override function has ${superParams.size}")
+    for((sup, sym) in superParams.zip(symParams))
+        if (sup.type != sym.type)
+            Log.error(sym.location, "Parameter ${sup.name} has type ${sup.type} but the override function has type ${sym.type}")
+    if (superFunc.function.returnType != sym.function.returnType)
+        Log.error(sym.location, "Return type ${superFunc.function.returnType} does not match the override function return type ${sym.function.returnType}")
+
+    sym.function.virtualFunctionNumber = superFunc.function.virtualFunctionNumber
+    parentClass.virtualMethods[superFunc.function.virtualFunctionNumber] = sym
+}
+
 
 // ---------------------------------------------------------------------------
 //                             Identify Fields
@@ -988,14 +1057,31 @@ private fun AstBlock.identifyFunctions(scope: SymbolTable, klass:ClassType?) {
 // and their types
 
 private fun AstClass.identifyFields() {
-//    for (param in params) {
-//        val sym = VarSymbol(param.location, param.id.name, param.type.resolveType(scope), false)
-//        scope.add(sym)
-//    }
+    if (klass.superClass!=null) {
+        // Copy the fields from the super class
+        for (field in klass.superClass.fields) {
+            klass.add(field)
+            symbolTable.add(field)
+        }
+    }
 
+    // add any fields defined in the constructor parameter list
+    for ((index, param) in constructor.parameters.withIndex()) {
+        if (params.parameters[index].kind != TokenKind.EOL) {
+            // We have a field, not just a parameter
+            val field = FieldSymbol(
+                param.location, param.name, param.type,
+                (params.parameters[index].kind == TokenKind.VAR)
+            )
+            klass.add(field)
+            symbolTable.add(field)
+        }
+    }
+
+    // and add any fields from this class
     for (stmt in statements) {
         if (stmt is AstDeclareField) {
-            val tcExpr = stmt.expr?.typeCheck(symbolTable)
+            val tcExpr = stmt.expr?.typeCheck(constructorSymbolTable)
 
             val type = stmt.type?.resolveType(symbolTable) ?:
                        tcExpr?.type ?:

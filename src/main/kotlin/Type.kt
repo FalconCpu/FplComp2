@@ -11,6 +11,8 @@ sealed class Type(private val name:String) {
             return true
         if (this is NullableType && elementType.isAssignableFrom(other))
             return true
+        if (this is ClassType && other is ClassType && other.superClass!=null)
+            return isAssignableFrom(other.superClass)
         return false
     }
 
@@ -80,13 +82,17 @@ class  ArrayType(val elementType: Type) : Type("Array<$elementType>") {
 //                       Struct Types
 // ----------------------------------------------------------------------------
 
-class  ClassType(name:String) : Type(name) {
+class  ClassType(name:String, val superClass: ClassType?) : Type(name) {
     val fields = mutableListOf<FieldSymbol>()
     val methods = mutableListOf<FunctionSymbol>()
+    val virtualMethods = mutableListOf<FunctionSymbol>()
+
     var classSize = 0
     lateinit var constructor : Function
 
     fun add(field: FieldSymbol) {
+        if (field.offset != -1 && field.offset != classSize)
+            Log.error(field.location, "Field ${field.name} has offset ${field.offset} but expected $classSize")
         field.offset = classSize
         classSize += field.type.getSize()
         fields += field
@@ -96,14 +102,19 @@ class  ClassType(name:String) : Type(name) {
         methods += method
     }
 
+    fun addVirtualMethod(method: FunctionSymbol) {
+        method.function.virtualFunctionNumber = virtualMethods.size
+        virtualMethods += method
+    }
+
     fun lookup(name: String): Symbol? {
         return fields.find { it.name == name } ?:
                methods.find { it.name == name }
     }
 
     companion object {
-        fun make(name: String): ClassType {
-            val new = ClassType(name)
+        fun make(name: String, superClass: ClassType?): ClassType {
+            val new = ClassType(name, superClass)
             DataSegment.allClasses.add(new)
             return new
         }
@@ -111,7 +122,7 @@ class  ClassType(name:String) : Type(name) {
 }
 
 // ----------------------------------------------------------------------------
-//                       Pointer Types
+//                       Nullable Types
 // ----------------------------------------------------------------------------
 
 class  NullableType(val elementType: Type) : Type("$elementType?") {

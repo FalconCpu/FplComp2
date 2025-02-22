@@ -1,23 +1,33 @@
 package falcon
 
-sealed class Symbol(val location: Location, val name:String, val type: Type) {
+sealed class Symbol(val location: Location, val name:String, val type: Type, val mutable:Boolean) {
     override fun toString(): String = name
 }
 
-class ConstantSymbol(location: Location, name: String, type: Type, val value: Any) : Symbol(location, name, type)
-class VarSymbol(location: Location, name: String, type: Type, val mutable:Boolean) : Symbol(location, name, type)
-class GlobalVarSymbol(location: Location, name: String, type: Type, val mutable:Boolean, val offset:Int) : Symbol(location, name, type)
-class FunctionSymbol(location: Location, name: String, type: FunctionType, val function: Function) : Symbol(location, name, type)
-class TypeSymbol(location: Location, name: String, type: Type) : Symbol(location, name, type)
-object UndefinedSymbol : Symbol(Location.nullLocation, "<undefined>", UndefinedType)
+class ConstantSymbol(location: Location, name: String, type: Type, val value: Any)
+    : Symbol(location, name, type, false)
+class VarSymbol(location: Location, name: String, type: Type, mutable:Boolean)
+    : Symbol(location, name, type, mutable)
+class GlobalVarSymbol(location: Location, name: String, type: Type, mutable:Boolean, val offset:Int)
+    : Symbol(location, name, type, mutable)
+class FunctionSymbol(location: Location, name: String, type: FunctionType, val function: Function)
+    : Symbol(location, name, type, false)
+class TypeSymbol(location: Location, name: String, type: Type)
+    : Symbol(location, name, type, false)
+object UndefinedSymbol
+    : Symbol(Location.nullLocation, "<undefined>", UndefinedType, false)
 
 
-class FieldSymbol(location: Location, name: String, type: Type, val mutable: Boolean) : Symbol(location, name, type) {
-    var offset = 0
+class FieldSymbol(location: Location, name: String, type: Type, mutable: Boolean)
+    : Symbol(location, name, type, mutable) {
+        var offset: Int = -1 // offset from the start of the object. -1 means not yet assigned
 }
 
 val lengthSymbol = FieldSymbol(Location.nullLocation, "length", IntType, false).also { it.offset = -4 }
 
+// dummy symbol to represent a chain of field accesses for the purpose of type checking
+class FieldAccessSymbol(location: Location, val lhs:Symbol, val rhs: FieldSymbol, type: Type, mutable: Boolean)
+    : Symbol(location, "$lhs.$rhs", type, mutable)
 
 // ----------------------------------------------------------------------------
 //                       Symbol Tables

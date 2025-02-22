@@ -24,15 +24,14 @@ class PathContext(
             uninitialized, possiblyUninitialized, refinedTypes, true
         )
 
-    fun addRefinedType(symbol: Symbol, type: Type) = PathContext (
-            uninitialized, possiblyUninitialized,
-            refinedTypes + (symbol to type),
-            unreachable
-        )
-
     fun addRefinedType(expr: TastExpression, type:Type) : PathContext {
-        return if (expr is TastVariable)
-            addRefinedType(expr.symbol, type)
+        val symbol = expr.getSymbol()
+        return if (symbol!=null)
+            PathContext (
+                uninitialized, possiblyUninitialized,
+                refinedTypes + (symbol to type),
+                unreachable
+            )
         else
             this
     }

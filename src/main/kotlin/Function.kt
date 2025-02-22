@@ -10,11 +10,17 @@ class Function(
     val parameters: List<VarSymbol>,
     val isVararg: Boolean,
     val returnType: Type,
-    val methodOf : ClassType?
+    methodOf : ClassType?
 ) {
     val prog = mutableListOf<Instr>()
     val vars = machineRegs.toMutableList<IRVal>()
     val labels = mutableListOf<Label>()
+    var virtualFunctionNumber = -1
+        set (value) {
+            if (field!=-1)
+                error("Attempt to set virtual function number twice")
+            field = value
+        }
 
     val symbols = mutableMapOf<VarSymbol, IRVar>()
     val retVal = if (returnType!= UnitType) machineRegs[8] else null

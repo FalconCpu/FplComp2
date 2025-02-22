@@ -326,5 +326,134 @@ class PathContextTest {
         runTest(input, expected)
     }
 
+    @Test
+    fun refinedFieldTypes() {
+        val prog = """
+            class Cat(val name:String?, val age:Int) 
 
+            fun test(a:Cat) -> String
+                if a.name!=null
+                    return a.name       # allowed as name is proven to be not null
+                else
+                    return "unknown"
+
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class Cat
+                Assign
+                  Member name (String?)
+                    Variable this Cat
+                  Variable name String?
+                Assign
+                  Member age (Int)
+                    Variable this Cat
+                  Variable age Int
+              Function test
+                If
+                  IfClause
+                    Compare NEI Bool
+                      Member name (String?)
+                        Variable a Cat
+                      IntLit 0 Null
+                    Return
+                      Member name (String)
+                        Variable a Cat
+                  IfClause
+                    Return
+                      StringLit "unknown" String
+
+        """.trimIndent()
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun refinedFieldTypes2() {
+        val prog = """
+            class Cat(var name:String?, val age:Int) 
+
+            fun test(a:Cat) -> String
+                if a.name!=null      # Cannot smartcast to String here as name is mutable
+                    return a.name
+                else
+                    return "unknown"
+
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:5.17: Type mismatch. Expected String, but found String?
+        """.trimIndent()
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun refinedFieldTypes3() {
+        val prog = """
+            class Address(val street: String?)
+            class Person(val home: Address?)
+            
+            fun getStreet(p: Person) -> String
+                if p.home != null and p.home.street != null
+                    return p.home.street  # Should be allowed
+                else
+                    return "Unknown"
+        """.trimIndent()
+
+        val expected = """
+            TopLevel
+              Class Address
+                Assign
+                  Member street (String?)
+                    Variable this Address
+                  Variable street String?
+              Class Person
+                Assign
+                  Member home (Address?)
+                    Variable this Person
+                  Variable home Address?
+              Function getStreet
+                If
+                  IfClause
+                    And Bool
+                      Compare NEI Bool
+                        Member home (Address?)
+                          Variable p Person
+                        IntLit 0 Null
+                      Compare NEI Bool
+                        Member street (String?)
+                          Member home (Address)
+                            Variable p Person
+                        IntLit 0 Null
+                    Return
+                      Member street (String)
+                        Member home (Address)
+                          Variable p Person
+                  IfClause
+                    Return
+                      StringLit "Unknown" String
+
+        """.trimIndent()
+
+        runTest(prog, expected)
+    }
+
+    @Test
+    fun refinedFieldTypes4() {
+        val prog = """
+            class Address(var street: String?)
+            class Person(val home: Address?)
+            
+            fun getStreet(p: Person) -> String
+                if p.home != null and p.home.street != null
+                    return p.home.street  # Should be allowed
+                else
+                    return "Unknown"
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:6.22: Type mismatch. Expected String, but found String?
+        """.trimIndent()
+        runTest(prog, expected)
+    }
 }

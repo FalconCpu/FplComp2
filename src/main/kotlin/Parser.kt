@@ -1,6 +1,5 @@
 package falcon
 import falcon.TokenKind.*
-import kotlin.math.exp
 
 class ParseError(location: Location, message: String) : Exception("$location: $message")
 
@@ -365,13 +364,13 @@ class Parser(private val lexer: Lexer) {
         return AstParameterList(params,isVariadic)
     }
 
-    private fun parseFunction(block: AstBlock) {
+    private fun parseFunction(block: AstBlock, qualifiers: Set<TokenKind>) {
         expect(FUN)
         val id = expect(IDENTIFIER,DELETE)
         val params = parseParameterList()
         val retType = if (canTake(ARROW)) parseType() else null
         expectEol()
-        val ret = AstFunction(id.location, id.text, params, retType, block)
+        val ret = AstFunction(id.location, id.text, params, retType, qualifiers, block)
         block.add(ret)
 
         if (lookahead.kind==INDENT) {
@@ -550,6 +549,20 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
     }
 
+    private fun parseSuperclass() : AstConstructor {
+        val id = parseTypeIdentifier()
+        val args = mutableListOf<AstExpression>()
+        if (canTake(OPENB)) {
+            if (lookahead.kind != CLOSEB)
+                do {
+                    args.add(parseExpression())
+                } while (canTake(COMMA))
+            expect(CLOSEB)
+        }
+        return AstConstructor(id.location, id, args, false)
+    }
+
+
     private fun parseClassParameter() : AstParameter {
         val kind = if (lookahead.kind==VAR || lookahead.kind==VAL) nextToken().kind else EOL
         val id = parseIdentifier()
@@ -590,13 +603,38 @@ class Parser(private val lexer: Lexer) {
         expect(DEDENT)
     }
 
+    private fun resolveSuperclass(astSuperClass: AstConstructor?, block:AstBlock) : ClassType?? {
+        if (astSuperClass==null)
+            return null
+
+        val sym = block.symbolTable.lookup(astSuperClass.astType.name)
+        if (sym==null) {
+            Log.error(astSuperClass.astType.location, "Undefined symbol ${astSuperClass.astType.name}")
+            return null
+        }
+
+        if (sym !is TypeSymbol) {
+            Log.error(astSuperClass.astType.location, "Symbol ${astSuperClass.astType.name} is a value not a class")
+            return null
+        }
+
+        if (sym.type !is ClassType) {
+            Log.error(astSuperClass.astType.location, "Type ${astSuperClass.astType.name} is not a class")
+            return null
+        }
+
+        return sym.type
+    }
+
     private fun parseClass(block: AstBlock) {
         expect(CLASS)
         val id = parseIdentifier()
         val params = parseClassParameterList()
+        val astSuperclass = if (canTake(COLON)) parseSuperclass() else null
         expectEol()
-        val type = ClassType.make(id.name)
-        val ret = AstClass(id.location, id.name, params, type, block)
+
+        val type = ClassType.make(id.name, resolveSuperclass(astSuperclass, block))
+        val ret = AstClass(id.location, id.name, params, type, astSuperclass, block)
         val sym = TypeSymbol(id.location, id.name, type)
         block.symbolTable.add(sym)
         block.add(ret)
@@ -647,6 +685,19 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
     }
 
+    private fun parseQualifiers(block: AstBlock) {
+        val qualifiers = mutableSetOf<TokenKind>()
+        while(lookahead.kind in listOf(VIRTUAL, OVERRIDE))
+            qualifiers.add(nextToken().kind)
+        if (qualifiers.contains(OVERRIDE) && qualifiers.contains(VIRTUAL))
+            Log.error(lookahead.location, "Cannot use both virtual and override")
+
+        when (lookahead.kind) {
+            FUN -> parseFunction(block, qualifiers)
+            else -> throw ParseError(lookahead.location, "Got  $lookahead when expecting statement")
+        }
+    }
+
     private fun parseStatement(block:AstBlock) {
         when (lookahead.kind) {
             VAR -> parseVarDecl(block)
@@ -673,7 +724,8 @@ class Parser(private val lexer: Lexer) {
         when (lookahead.kind) {
             VAR -> parseFieldDecl(block)
             VAL -> parseFieldDecl(block)
-            FUN -> parseFunction(block)
+            FUN -> parseFunction(block, emptySet())
+            OVERRIDE, VIRTUAL -> parseQualifiers(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             RETURN, WHILE, IDENTIFIER, OPENB, FOR, IF ->
                 throw ParseError(lookahead.location, "Statements not allowed in class body")
@@ -685,7 +737,7 @@ class Parser(private val lexer: Lexer) {
         when (lookahead.kind) {
             VAR -> parseGlobalVarDecl(block)
             VAL -> parseGlobalVarDecl(block)
-            FUN -> parseFunction(block)
+            FUN -> parseFunction(block, emptySet())
             CLASS -> parseClass(block)
             CONST -> parseConstDecl(block)
             ENUM -> parseEnum(block)
