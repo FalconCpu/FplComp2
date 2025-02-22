@@ -26,6 +26,10 @@ object DataSegment {
         sb.append("Class/$nameString:\n");
         sb.append("dcw $nameRef\n")
         sb.append("dcw $classSize\n")
+        if (superClass==null)
+            sb.append("dcw 0\n")
+        else
+            sb.append("dcw Class/$superClass\n")
         for(vm in virtualMethods)
             sb.append("dcw /${vm.function.name}\n")
         sb.append("\n")

@@ -1,0 +1,13 @@
+class HwRegs
+    var sevenSeg: Int    # R/W  6 digit hexadecimal seven segment display
+    var led: Int         # R/W  10 LEDs
+    var sw: Int          # R    10 Switches
+    var key: Int         # R    4 Push buttons
+    var uartTx: Int      # R/W  Write = byte of data to transmit: Int  read = number of slots free in fifo
+    var uartRx: Int      # R    1 byte of data from the uart: Int  -1 if no data
+    var mouse_x: Int     # R    10 bit mouse x position
+    var mouse_y: Int     # R    10 bit mouse y position
+    var mouse_btn: Int   # R    3 bit mouse buttons
+    var keyboard: Int    # R    Scan codes from the keyboard: Int  -1 if no data
+    var vga_ypos: Int    # R    10 bit y position of the VGA display
+    var sim_mode: Int    # R    1 if in simulation mode: Int  0 if in hardware

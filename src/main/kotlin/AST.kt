@@ -268,6 +268,12 @@ sealed class AstNode (val location:Location) {
                 for(member in members)
                     member.dump(indent+1, sb)
             }
+
+            is AstIsExpression -> {
+                sb.append("IsExpression  $isnot\n")
+                expr.dump(indent+1, sb)
+                compType.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -304,6 +310,7 @@ class AstFunctionCall(location: Location, val expr: AstExpression, val args: Lis
 class AstNewArray(location: Location, val elType: AstType, val size: AstExpression, val isLocal:Boolean) : AstExpression(location)
 class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>, val isLocal:Boolean) : AstExpression(location)
 class AstIfExpression(location: Location, val cond: AstExpression, val thenExpr:AstExpression, val elseExpr:AstExpression) : AstExpression(location)
+class AstIsExpression(location: Location, val expr: AstExpression, val compType: AstType, val isnot: Boolean) : AstExpression(location)
 
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)

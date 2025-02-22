@@ -6,7 +6,7 @@ import java.io.FileReader
 import java.io.StringReader
 
 class SubclassTest   {
-    val stdLibFiles = listOf("memory.fpl", "string.fpl", "print.fpl")
+    val stdLibFiles = listOf("hwregs.fpl","memory.fpl", "string.fpl", "print.fpl")
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
 
     private fun runTest(input: String, expected: String) {
@@ -481,4 +481,145 @@ class SubclassTest   {
         runTest(input, expected)
     }
 
+    @Test
+    fun isTest() {
+        val input = """
+            class Animal(val name: String)
+            class Dog(name: String, val age: Int) : Animal(name)
+            
+            fun main()
+                val d : Animal = new Dog("Fido", 3)
+                if d is Dog
+                    printf("%s is a dog\n", d.name)
+            """.trimIndent()
+
+        val expected = """
+            Fido is a dog
+
+            """.trimIndent()
+
+        runTest(input, expected)
+    }
+
+    @Test
+    fun isAlwaysTrue() {
+        val input = """
+            class Animal(val name: String)
+            class Dog(name: String, val age: Int) : Animal(name)
+            class Car(val make: String, val model: String)
+
+            fun main()
+                val a = new Animal("Generic Animal")
+                val d = new Dog("Fido", 3)
+
+                if a is Animal                            # redundant test
+                    printf("%s is an animal\n", a.name)
+
+                if d is Animal                            # redundant test  
+                    printf("%s is an animal\n", d.name)
+
+                if d is Dog                                # redundant test
+                    printf("%s is a dog\n", d.name)
+
+                if a is Dog                                 # not a redundant test
+                    printf("This should never print\n")
+
+                if a is Car                                 # Error: Car is not a subclass of Animal
+                    printf("This should never print\n")
+
+        """.trimIndent()
+
+        val expected = """
+            input.fpl:9.10: is expression is always true
+            input.fpl:12.10: is expression is always true
+            input.fpl:15.10: is expression is always true
+            input.fpl:21.10: is expression is always false
+        """.trimIndent()
+
+        runTest(input, expected)
+    }
+
+    @Test
+    fun isTest2() {
+        val input = """
+            class Animal(val name: String)
+            class Dog(name: String, val age: Int) : Animal(name)
+            class Cat(name: String, val age: Int) : Animal(name)
+
+            fun main()
+                val dog : Animal = new Dog("Rex", 4)
+                val cat : Animal = new Cat("Whiskers", 2)
+                
+                if dog is Dog
+                    printf("%s is a dog\n", dog.name)
+                
+                if cat is Dog
+                    printf("This should never print\n")
+
+        """.trimIndent()
+
+        val expected = """
+            Rex is a dog
+            
+        """.trimIndent()
+
+        runTest(input, expected)
+    }
+
+    @Test
+    fun isTest3() {
+        val input = """
+            class Animal(val name: String)
+            class Dog(name: String, val age: Int) : Animal(name)
+            class Cat(name: String, val age: Int) : Animal(name)
+
+            fun main()
+                val dog : Animal = new Dog("Rex", 4)
+
+                if dog isnot Cat
+                    printf("%s is not a Cat\n", dog.name)
+
+        """.trimIndent()
+
+        val expected = """
+            Rex is not a Cat
+            
+        """.trimIndent()
+
+        runTest(input, expected)
+    }
+
+    @Test
+    fun istest4() {
+        val input = """
+            class Animal(val name: String)
+            class Dog(name: String, val age: Int) : Animal(name)
+
+            fun main()
+                val dog: Animal? = new Dog("Rex", 4)
+
+                if dog is Dog
+                    printf("%s is a dog\n", dog.name)
+
+                if dog is Animal
+                    printf("%s is an animal\n", dog.name)
+
+                val nullAnimal: Animal? = null
+
+                if nullAnimal is Animal
+                    printf("This should never print %s\n", nullAnimal.name)
+                else
+                    printf("nullAnimal is not an animal\n")
+
+        """.trimIndent()
+
+        val expected = """
+            Rex is a dog
+            Rex is an animal
+            nullAnimal is not an animal
+
+        """.trimIndent()
+
+        runTest(input, expected)
+    }
 }

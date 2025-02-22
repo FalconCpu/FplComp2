@@ -48,8 +48,8 @@ fun TastExpression.codeGen() : IRVal {
             if (func is TastFunctionLiteral) {
                 val function = func.function
                 val numParams = function.parameters.size
-                val funcThis = func.function.thisSymbol
-                val thisExpr = if (funcThis!=null) currentFunc.mapSymbol(funcThis) else null
+                val funcThis = function.thisSymbol
+                val thisExpr = if (funcThis!=null) currentFunc.mapSymbol(currentFunc.thisSymbol!!) else null
                 val numRegs = codeGenFuncArgs(args, numParams, function.isVararg, thisExpr)
                 currentFunc.addCall(func.function, numRegs)
             } else if (func is TastMethodLiteral) {
@@ -131,6 +131,10 @@ fun TastExpression.codeGen() : IRVal {
             val e = expr.codeGen()
             currentFunc.addAlu(AluOp.XORI, e, 1)
         }
+
+        is TastIs -> {
+            TODO()
+        }
     }
 }
 
@@ -149,7 +153,7 @@ fun codeGenFuncArgs(args:List<TastExpression>, numParameters:Int, isVariadic: Bo
             currentFunc.add(InstrMov(machineRegs[regIndex++], thisArg))
         for(arg in args)
             currentFunc.add(InstrMov(machineRegs[regIndex++], arg))
-        return machineRegs.slice(1..<numParameters+1)
+        return machineRegs.slice(1..<regIndex)
 
     } else {
         var regIndex = 1
@@ -176,7 +180,7 @@ fun codeGenFuncArgs(args:List<TastExpression>, numParameters:Int, isVariadic: Bo
         // And add the pointer to the varargs to the stack
         currentFunc.add(InstrAlui(machineRegs[regIndex++], AluOp.ADDI, machineRegs[31], stackAlloc.startAddress + 4))
         currentFunc.freeStackAlloc(stackAlloc)
-        return machineRegs.slice(1..<numParameters+1)
+        return machineRegs.slice(1..<regIndex)
     }
 }
 
@@ -227,6 +231,28 @@ fun TastExpression.codeGenBool(labelTrue:Label, labelFalse:Label) {
 
         is TastNot ->
             expr.codeGenBool(labelFalse, labelTrue)
+
+        is TastIs -> {
+            val lt = if (isNot) labelFalse else labelTrue
+            val lf = if (isNot) labelTrue else labelFalse
+
+            val lhs = expr.codeGen()
+            val type = compType as ClassType
+            if (expr.type is NullableType)
+                currentFunc.add(InstrBranch(AluOp.EQI, lhs, machineRegs[0], lf))
+
+            if (expr.type is NullableType && expr.type.elementType== type)  // if comparing a nullable type to its own non-nullable type then we can skip the check
+                currentFunc.addJump(lt)
+            else {
+                if (type.hasSubclasses)
+                    TODO("is operator for classes with subclasses")
+                val lhsTypeDescriptor = currentFunc.addLoad(4, lhs, -4)
+                val rhsTypeDescriptor = currentFunc.newTemp()
+                currentFunc.add(InstrClassRef(rhsTypeDescriptor, type))
+                currentFunc.add(InstrBranch(AluOp.EQI, lhsTypeDescriptor, rhsTypeDescriptor, lt))
+                currentFunc.add(InstrJump(lf))
+            }
+        }
 
         else -> {
             val e = codeGen()

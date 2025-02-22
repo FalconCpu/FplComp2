@@ -206,13 +206,19 @@ class Parser(private val lexer: Lexer) {
         var left = parseAdd()
         while (lookahead.kind == LT || lookahead.kind == LE ||
                lookahead.kind == GT || lookahead.kind == GE ||
-               lookahead.kind == EQ || lookahead.kind == NE) {
+               lookahead.kind == EQ || lookahead.kind == NE ||
+               lookahead.kind == IS || lookahead.kind == ISNOT) {
             val op = nextToken()
-            val right = parseAdd()
-            left = if (op.kind==EQ || op.kind==NE)
-                AstEqualsOp(op.location, op.kind, left, right)
-            else
-                AstCompareOp(op.location, op.kind, left, right)
+            if (op.kind==IS || op.kind==ISNOT) {
+                val right = parseType()
+                left = AstIsExpression(op.location, left, right, op.kind==ISNOT)
+            } else {
+                val right = parseAdd()
+                left = if (op.kind == EQ || op.kind == NE)
+                    AstEqualsOp(op.location, op.kind, left, right)
+                else
+                    AstCompareOp(op.location, op.kind, left, right)
+            }
         }
         return left
     }

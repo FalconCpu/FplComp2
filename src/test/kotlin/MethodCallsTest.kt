@@ -6,7 +6,7 @@ import java.io.StringReader
 
 
 class MethodCallsTest {
-    val stdLibFiles = listOf("memory.fpl", "print.fpl")
+    val stdLibFiles = listOf("hwregs.fpl","memory.fpl", "print.fpl")
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
 
     private fun runTest(input: String, expected: String) {
@@ -33,6 +33,31 @@ class MethodCallsTest {
         """.trimIndent()
         runTest(input, expected)
     }
+
+    @Test
+    fun methodCalls2() {
+        val input = """
+            class Cat(val name:String, val age:Int)
+                fun greet()
+                    printf("%s says hi\n", name)
+                    meow()                           # implicit this-call 
+            
+                fun meow()
+                    printf("%s says meow\n", name)
+            
+            fun main()
+                var c = new Cat("Fluffy", 3)
+                c.greet()
+        """.trimIndent()
+
+        val expected = """
+            Fluffy says hi
+            Fluffy says meow
+
+        """.trimIndent()
+        runTest(input, expected)
+    }
+
 
     @Test
     fun multipleMethods() {

@@ -25,9 +25,12 @@ Done:
    enum
    when(enum) check for complete coverage
    not operator
+   inheritance
+   virtual methods
+   'is' tests
+   type refinement for is tests
 
 ShortTerm:
-   type refinement for members
    static fields in classes
    static methods
    ?: operator
@@ -36,6 +39,8 @@ ShortTerm:
 Medium term:
    splat operator
    aggregate initializers
+   when with `is` clauses
+   `is` operator with hierarchy
 
 Longer Term:
    List<>
@@ -43,13 +48,11 @@ Longer Term:
    polymorphism
    inline classes/arrays
    change malloc to freelist rather than bump allocator
-   inheritance
-   virtual methods
-   'is' tests
    abstract class
    generics?
    extension functions
    when statement - use a binary search or lookup table
+   sealed classes
 
 optimizer:
    common subexpression elimination

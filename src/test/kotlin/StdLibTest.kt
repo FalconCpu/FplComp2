@@ -5,7 +5,7 @@ import java.io.FileReader
 import java.io.StringReader
 
 class StdLibTest {
-    val stdLibFiles = listOf("memory.fpl", "string.fpl", "print.fpl")
+    val stdLibFiles = listOf("hwregs.fpl", "memory.fpl", "string.fpl", "print.fpl")
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
 
     private fun runTest(input: String, expected: String) {

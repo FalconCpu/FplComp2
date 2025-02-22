@@ -211,8 +211,8 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             if (rhs.type == ErrorType)   return rhs
 
             // Do type promotions
-            val lhsType = if (lhs.type== CharType) IntType else lhs.type
-            val rhsType = if (rhs.type== CharType) IntType else rhs.type
+            val lhsType = if (lhs.type== CharType || lhs.type== ShortType) IntType else lhs.type
+            val rhsType = if (rhs.type== CharType || rhs.type== ShortType) IntType else rhs.type
 
             val binop = binopTable.firstOrNull { it.op==op && it.left==lhsType && it.right==rhsType }
             if(binop==null)
@@ -277,7 +277,10 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                 TokenKind.MINUS -> {
                     val arg = expr.typeCheckRvalue(scope)
                     if (arg.type== IntType)
-                        TastBinaryOp(location, AluOp.SUBI, TastIntLiteral(location, 0, IntType), arg, IntType)
+                        if (arg is TastIntLiteral)
+                            TastIntLiteral(location, -arg.value, arg.type)
+                        else
+                            TastBinaryOp(location, AluOp.SUBI, TastIntLiteral(location, 0, IntType), arg, IntType)
                     else
                         TastError(location,"No operation defined for unary minus '${arg.type}'")
                 }
@@ -317,6 +320,37 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             pathContext = listOf(pathContext, pathContextThenOut).merge()
             elseExpr.checkType(thenExpr.type)
             TastIfExpression(location, cond, thenExpr, elseExpr, thenExpr.type)
+
+        }
+
+        is AstIsExpression -> {
+            val lhs = expr.typeCheckRvalue(scope)
+            val type = compType.resolveType(scope)
+            val lhsType = if (lhs.type is NullableType) lhs.type.elementType else lhs.type
+
+            if (lhs.type== ErrorType)
+                lhs
+            else if (type== ErrorType)
+                TastIntLiteral(location, 1, BoolType)
+            else if (type !is ClassType )
+                TastError(location,"Got type '$type' when expecting class")
+            else if (lhsType !is ClassType)
+                TastError(location,"Got type '${lhs.type}' when expecting class")
+            else {
+                if (lhsType.isSubtypeOf(type) && lhs.type !is NullableType)
+                    if (isnot)
+                        Log.error(location, "isnot expression is always false")
+                    else
+                        Log.error(location, "is expression is always true")
+                if (!type.isSubtypeOf(lhsType) && !lhsType.isSubtypeOf(type))
+                    if (isnot)
+                        Log.error(location, "isnot expression is always true")
+                    else
+                        Log.error(location, "is expression is always false")
+
+                TastIs(location, lhs, type, this.isnot)
+            }
+
 
         }
     }
@@ -434,13 +468,17 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             if (rhs.type== ErrorType)    return rhs
 
             val op = if (op==TokenKind.NE) AluOp.NEI else AluOp.EQI
-            if ((lhs.type==IntType || lhs.type== CharType) && (rhs.type==IntType || rhs.type== CharType))
+            if (lhs.type.isIntegerType() && rhs.type.isIntegerType())
                 return TastCompareOp(location, op, lhs, rhs, BoolType)
 
             if (lhs.type== StringType && rhs.type== StringType)
                 return TastCompareOp(location, if (this.op==TokenKind.EQ) AluOp.EQS else AluOp.NES, lhs, rhs, BoolType)
 
             if (lhs.type is ClassType && rhs.type==lhs.type)
+                return TastCompareOp(location, op, lhs, rhs, BoolType)
+            if (lhs.type is NullableType && lhs.type.elementType.isAssignableFrom(rhs.type))
+                return TastCompareOp(location, op, lhs, rhs, BoolType)
+            if (rhs.type is NullableType && rhs.type.elementType.isAssignableFrom(lhs.type))
                 return TastCompareOp(location, op, lhs, rhs, BoolType)
 
             if (lhs.type is NullableType && rhs.type== NullType) {
@@ -505,6 +543,17 @@ fun AstExpression.typeCheckBool(scope:SymbolTable) : TastExpression {
             } else {
                 error("Unknown unary operator")
             }
+        }
+
+        is AstIsExpression -> {
+            val ret = typeCheckRvalue(scope)
+            if (ret is TastIs) {
+                if (isnot)
+                    pathContextFalse = pathContext.addRefinedType(ret.expr, ret.compType)
+                else
+                    pathContextTrue = pathContext.addRefinedType(ret.expr, ret.compType)
+            }
+            ret
         }
 
         else -> {
@@ -633,6 +682,8 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val sym = VarSymbol(this.id.location, this.id.name, tcType, mutable)
             if (tcExpr==null)
                 pathContext = pathContext.addUninitialized(sym)
+            if (tcExpr!=null && tcExpr.type != tcType)
+                pathContext = pathContext.addRefinedType(tcExpr, tcExpr.type)
             scope.add(sym)
             tcExpr?.checkType(sym.type)
             TastDeclareVar(this.location, sym, tcExpr)
@@ -1058,6 +1109,7 @@ private fun checkOverride(sym: FunctionSymbol,  parentClass:ClassType?) {
 
 private fun AstClass.identifyFields() {
     if (klass.superClass!=null) {
+        klass.superClass.hasSubclasses = true
         // Copy the fields from the super class
         for (field in klass.superClass.fields) {
             klass.add(field)

@@ -16,7 +16,7 @@ sealed class Type(private val name:String) {
         return false
     }
 
-    fun isIntegerType() = this == IntType || this== CharType || this== ErrorType
+    fun isIntegerType() = this == IntType || this== CharType || this== ShortType || this== ErrorType
 
     fun checkType(expression: TastExpression) {
         if (!isAssignableFrom(expression.type))
@@ -28,6 +28,7 @@ sealed class Type(private val name:String) {
         CharType -> 1
         ErrorType -> 1
         IntType -> 4
+        ShortType -> 2
         RealType -> 4
         UndefinedType -> 0
         StringType -> 4
@@ -47,6 +48,7 @@ object UnitType      : Type("Unit")
 object NullType      : Type("Null")
 object BoolType      : Type("Bool")
 object CharType      : Type("Char")
+object ShortType     : Type("Short")
 object IntType       : Type("Int")
 object RealType      : Type("Real")
 object StringType    : Type("String")
@@ -86,13 +88,22 @@ class  ClassType(name:String, val superClass: ClassType?) : Type(name) {
     val fields = mutableListOf<FieldSymbol>()
     val methods = mutableListOf<FunctionSymbol>()
     val virtualMethods = mutableListOf<FunctionSymbol>()
+    var hasSubclasses = false
 
     var classSize = 0
     lateinit var constructor : Function
 
     fun add(field: FieldSymbol) {
+        // add padding if necessary
+        classSize = when (field.type.getSize()) {
+            4 -> (classSize+3) and 0xFFFFFFC
+            2 -> (classSize+1) and 0xFFFFFFE
+            else -> classSize
+        }
+
         if (field.offset != -1 && field.offset != classSize)
             Log.error(field.location, "Field ${field.name} has offset ${field.offset} but expected $classSize")
+
         field.offset = classSize
         classSize += field.type.getSize()
         fields += field
@@ -111,6 +122,15 @@ class  ClassType(name:String, val superClass: ClassType?) : Type(name) {
         return fields.find { it.name == name } ?:
                methods.find { it.name == name }
     }
+
+    fun isSubtypeOf(type: ClassType): Boolean {
+        if (this==type)
+            return true
+        if (superClass==null)
+            return false
+        return superClass.isSubtypeOf(type)
+    }
+
 
     companion object {
         fun make(name: String, superClass: ClassType?): ClassType {

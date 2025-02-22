@@ -4,24 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Enums implemented">
-      <change afterPath="$PROJECT_DIR$/src/test/kotlin/SubclassTest.kt" afterDir="false" />
+    <list default="true" id="873c2117-4658-4b45-a314-7d41966b369a" name="Changes" comment="Class Inheritance implemented">
+      <change afterPath="$PROJECT_DIR$/src/stdlib/graphics.fpl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/stdlib/hwregs.fpl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/kotlin/OsTests.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/AST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/AST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/CodeGen.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/DataSegment.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Function.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Function.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/GenAssembly.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Parser.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/PathContext.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/PathContext.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/Peephole.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Peephole.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Symbol.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Symbol.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TAST.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TODO" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TODO" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TokenKind.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/Type.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/Type.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/TypeCheck.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stdlib/memory.fpl" beforeDir="false" afterPath="$PROJECT_DIR$/src/stdlib/memory.fpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stdlib/print.fpl" beforeDir="false" afterPath="$PROJECT_DIR$/src/stdlib/print.fpl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/GenAssemblyTest.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/kotlin/PathContextTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/PathContextTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/IRGenTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/IRGenTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/MethodCallsTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/MethodCallsTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/StdLibTest.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/kotlin/SubclassTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/kotlin/SubclassTest.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,9 +110,11 @@
     "Gradle.InterpreterTest.helloWorld.executor": "Run",
     "Gradle.LexerTest.executor": "Coverage",
     "Gradle.LexerTest.lexerTest.executor": "Run",
+    "Gradle.MethodCallsTest.classReferences.executor": "Run",
     "Gradle.MethodCallsTest.destructorTest.executor": "Run",
     "Gradle.MethodCallsTest.methodCallsMethodTest.executor": "Run",
     "Gradle.MethodCallsTest.multipleMethods.executor": "Run",
+    "Gradle.OsTests.basicGraphics.executor": "Run",
     "Gradle.StdLibTest.forLoopArrayTest.executor": "Run",
     "Gradle.StdLibTest.newStringTest.executor": "Run",
     "Gradle.StdLibTest.newTest.executor": "Run",
@@ -115,6 +123,7 @@
     "Gradle.StdLibTest.printfTest.executor": "Run",
     "Gradle.StdLibTest.stringComparisonsTest.executor": "Run",
     "Gradle.StdLibTest.whenStatementTest.executor": "Run",
+    "Gradle.SubclassTest.isTest.executor": "Run",
     "Gradle.SubclassTest.manyFields.executor": "Run",
     "Gradle.SubclassTest.superclassArgs.executor": "Run",
     "Gradle.SubclassTest.virtualMethod.executor": "Run",
@@ -161,8 +170,8 @@
       <recent name="falcon" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.SubclassTest.manyFields">
-    <configuration name="StdLibTest.whenStatementTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+  <component name="RunManager" selected="Gradle.Tests in 'fpl.test'">
+    <configuration name="MethodCallsTest.classReferences" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -175,7 +184,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.StdLibTest.whenStatementTest&quot;" />
+            <option value="&quot;falcon.MethodCallsTest.classReferences&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -186,7 +195,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="SubclassTest.manyFields" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="OsTests.basicGraphics" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -199,7 +208,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.SubclassTest.manyFields&quot;" />
+            <option value="&quot;falcon.OsTests.basicGraphics&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -210,7 +219,7 @@
       <RunAsTest>true</RunAsTest>
       <method v="2" />
     </configuration>
-    <configuration name="SubclassTest.superclassArgs" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+    <configuration name="SubclassTest.isTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -223,7 +232,7 @@
           <list>
             <option value=":test" />
             <option value="--tests" />
-            <option value="&quot;falcon.SubclassTest.superclassArgs&quot;" />
+            <option value="&quot;falcon.SubclassTest.isTest&quot;" />
           </list>
         </option>
         <option name="vmOptions" />
@@ -281,19 +290,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Gradle.SubclassTest.manyFields" />
-      <item itemvalue="Gradle.SubclassTest.superclassArgs" />
+      <item itemvalue="Gradle.MethodCallsTest.classReferences" />
+      <item itemvalue="Gradle.OsTests.basicGraphics" />
+      <item itemvalue="Gradle.SubclassTest.isTest" />
       <item itemvalue="Gradle.SubclassTest.virtualMethod" />
-      <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
       <item itemvalue="Gradle.Tests in 'fpl.test'" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.SubclassTest.manyFields" />
         <item itemvalue="Gradle.Tests in 'fpl.test'" />
+        <item itemvalue="Gradle.MethodCallsTest.classReferences" />
+        <item itemvalue="Gradle.OsTests.basicGraphics" />
+        <item itemvalue="Gradle.SubclassTest.isTest" />
         <item itemvalue="Gradle.SubclassTest.virtualMethod" />
-        <item itemvalue="Gradle.SubclassTest.superclassArgs" />
-        <item itemvalue="Gradle.StdLibTest.whenStatementTest" />
       </list>
     </recent_temporary>
   </component>
@@ -442,7 +451,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739238879564</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Class Inheritance implemented">
+      <option name="closed" value="true" />
+      <created>1740209949932</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1740209949932</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -474,7 +491,8 @@
     <MESSAGE value="+= -+ *= and /= operators now implemented" />
     <MESSAGE value="Named constants implemented" />
     <MESSAGE value="Enums implemented" />
-    <option name="LAST_COMMIT_MESSAGE" value="Enums implemented" />
+    <MESSAGE value="Class Inheritance implemented" />
+    <option name="LAST_COMMIT_MESSAGE" value="Class Inheritance implemented" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/fpl$LexerTest.ic" NAME="LexerTest Coverage Results" MODIFIED="1736365430595" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true" />

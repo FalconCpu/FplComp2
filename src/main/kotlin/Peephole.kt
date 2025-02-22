@@ -307,6 +307,8 @@ class Peephole(private val func: Function) {
     }
 
     fun run() {
+        if(debug)
+            println("\nStarting peephole on ${func.name}")
         do {
             madeChange = false
             rebuildIndex()

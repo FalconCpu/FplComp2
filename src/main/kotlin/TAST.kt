@@ -280,6 +280,11 @@ sealed class Tast(val location: Location) {
                 sb.append("Not\n")
                 expr.dump(indent + 1, sb)
             }
+
+            is TastIs -> {
+                sb.append("Is $isNot $compType\n")
+                expr.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -288,6 +293,10 @@ sealed class Tast(val location: Location) {
 // Expressions
 sealed class TastExpression(location: Location, val type: Type) : Tast(location) {
     fun checkType(expectedType: Type) {
+        if (expectedType==ShortType && type==IntType && this is TastIntLiteral && value in -32768..32767)
+            return
+        if (expectedType==CharType && type==IntType && this is TastIntLiteral && value in -128..127)
+            return
         if (!expectedType.isAssignableFrom(this.type))
             Log.error(location, "Type mismatch: expected $expectedType but got $type")
     }
@@ -315,6 +324,7 @@ class TastNeg(location: Location, val expr: TastExpression, type:Type) : TastExp
 class TastNewArray(location: Location, val size:TastExpression, val isLocal:Boolean, type:Type) : TastExpression(location, type)
 class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
 class TastNot(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
+class TastIs(location: Location, val expr: TastExpression, val compType:Type, val isNot:Boolean) : TastExpression(location, BoolType)
 
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type)
     : TastExpression(location, type)

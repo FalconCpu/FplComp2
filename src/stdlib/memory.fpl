@@ -42,6 +42,7 @@ class MemChunkArray
 class ClassDescriptor
     var name : String   # Name of class
     var size : Int      # Size of an instance of this class
+    var superClass : ClassDescriptor?
     # vtable pointers will go here
 
 # ##############################################################

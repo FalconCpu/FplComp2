@@ -336,11 +336,11 @@ class IRGenTest {
             MOV $1, #1
             MOV $2, #2
             MOV $3, #3
-            CALL Cat($1, $2)
+            CALL Cat($1, $2, $3)
             MOV #4, 0
             MOV c, #1
             MOV $1, c
-            CALL Cat/greet()
+            CALL Cat/greet($1)
             MOV #5, $8
             @0:
             RET []
