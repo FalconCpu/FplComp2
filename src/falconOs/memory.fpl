@@ -1,0 +1,154 @@
+# #############################################################
+#                       Memory
+# #############################################################
+# Heap management routines
+
+# For now use a simple bump allocator. Later we can develop a more sophisticated system.
+
+# Allocations are always done in multiples of 16 bytes.
+# Each chunk has an 8 byte header - consisting of a size word and another word of meta-data.
+# Let us also enforce a maximum allowable chunk size is 256Mb (In practice this is no limitation as the FPGA board only
+# has 64Mb of memory). Hence the upper and lower 4 bits of the size are always zero.
+# Hence we can use these bits to encode the state of the chunk.
+
+# By storing a magic number (0xB) in the lower 4 bits of the size field, we get a basic check for buffer overruns -
+# (system is little endian, so the lower 4 bits are the first 4 bits of the size field). If we ever read a chunk
+# which does not have this magic number, we know that we have a corrupted memory list.
+
+# The upper 4 bits of the size field are used to mark the state of the chunk as follows
+# 0 : Free
+# 1 : Chunk contains an object - the next 4 bytes contain a pointer to a ClassDescriptor
+# 2 : Chunk contains an array - the next 4 bytes contain the number of elements
+
+# Global variables to track the heap
+
+#Some classes to describe the memory layout
+class MemChunkFree
+    var size : Int  # size in bytes + lower 4-bits = 0
+    var meta : Int  # Meta data
+
+class MemChunkObject
+    var size : Int   # size in bytes + Lower 4-bits = 1
+    var klass : ClassDescriptor
+
+class MemChunkArray
+    var size : Int  # size in bytes + Lower 4-bits = 2
+    var numElements : Int
+
+class ClassDescriptor
+    var name : String   # Name of class
+    var size : Int      # Size of an instance of this class
+    var superClass : ClassDescriptor?
+    # vtable pointers will go here
+
+# ##############################################################
+#                    initialize the heap
+# ##############################################################
+fun initializeMemory()
+    val sysVars = (0x000080 : SysVars)
+    sysVars.heap_pointer = 0x1000
+    sysVars.heap_end = 0x3f80000
+    val freeChunk = (sysVars.heap_pointer : MemChunkFree)
+    freeChunk.size = (sysVars.heap_end - sysVars.heap_pointer) | 0x0000000B
+
+# ##############################################################
+#                 mallocObject
+# ##############################################################
+# Allocate a chunk of memory for an instance of a class
+# Returns a pointer to the user data in the chunk or 0 if no memory available
+fun mallocObject(klass:ClassDescriptor) -> Int
+    val sysVars = (0x000080 : SysVars)
+    val size = (klass.size + 23) & 0xFFFFFFF0  # Add 8 for header, round up to multiple of 16
+    val ret = sysVars.heap_pointer
+    if ret+size > sysVars.heap_end
+        abort(ERROR_OUT_OF_MEMORY)
+    sysVars.heap_pointer = ret + size
+
+    # fill in the allocated chunks header
+    val chunk = (ret : MemChunkObject)
+    if chunk.size & 0xF000000F != 0x0000000B
+        abort(ERROR_MEMORY_CORRUPT)
+    chunk.size = size | 0x1000000B
+    chunk.klass = klass
+
+    # mark the remaining heap as free
+    val freeChunk = (sysVars.heap_pointer : MemChunkFree)
+    freeChunk.size = (sysVars.heap_end - sysVars.heap_pointer) | 0x0000000B
+
+    return ret + 8
+
+# ##############################################################
+#                 mallocArray
+# ##############################################################
+# Allocate a chunk of memory for an array
+# Returns a pointer to the user data in the chunk or 0 if no memory available
+fun mallocArray(numElements:Int, elementSize:Int) -> Int
+    val sysVars = (0x000080 : SysVars)
+    val size = (numElements * elementSize + 23) & 0xFFFFFFF0  # Add 8 for header, round up to multiple of 16
+    val ret = sysVars.heap_pointer
+    if ret+size > sysVars.heap_end
+        abort(ERROR_OUT_OF_MEMORY)
+    sysVars.heap_pointer = ret + size
+
+    # fill in the allocated chunks header
+    val chunk = (ret : MemChunkArray)   # Fill in the header
+    if chunk.size & 0xF000000F != 0x0000000B
+        abort(ERROR_MEMORY_CORRUPT)
+    chunk.size = size | 0x2000000B
+    chunk.numElements = numElements
+
+    # mark the remaining heap as free
+    val freeChunk = (sysVars.heap_pointer : MemChunkFree)
+    freeChunk.size = (sysVars.heap_end - sysVars.heap_pointer) | 0x0000000B
+
+    # Blank the memory
+    val array = (ret + 8 : Array<Int>)
+    for i in 0 to < (size-8)/4
+        array[i] = 0
+    return ret + 8
+
+# ##############################################################
+#                 free
+# ##############################################################
+# Free a chunk of memory
+# For now just mark the chunk as free - later we will implement a more sophisticated freelist
+
+fun free(ptr:Int)
+    if ptr=0
+        return
+    val chunk = (ptr-8 : MemChunkFree)
+
+    if chunk.size & 0xF != 0xB
+        abort(ERROR_MEMORY_CORRUPT)         # Corrupted memory
+    if chunk.size & 0xF0000000 = 0
+        abort(ERROR_DOUBLE_FREE)         # Double free
+    chunk.size = chunk.size & 0x0FFFFFFF   # mark chunk as free
+
+# ##############################################################
+#                 dumpMemory
+# ##############################################################
+# Dump the memory layout
+fun dumpMemory()
+    val sysVars = (0x000080 : SysVars)
+    var ptr = 0x1000
+    while ptr < sysVars.heap_end
+        val chunk = (ptr : MemChunkFree)
+        val magic = chunk.size & 0x0000000F
+        val size = chunk.size  & 0x0FFFFFF0
+        val kind = chunk.size  lsr 28
+        if magic != 0xB
+            printf("Corrupted memory at %x\n", ptr)
+            return
+        if kind = 0
+            printf("%08x %8x FREE\n", ptr, size)
+        elsif kind = 1
+            val obj = (ptr : MemChunkObject)
+            printf("%08x %8x %s\n", ptr, size, obj.klass.name)
+        elsif kind = 2
+            val arr = (ptr : MemChunkArray)
+            val elementSize = (size-8) / arr.numElements
+            printf("%08x %8x Array(%d,%d)\n", ptr, size, arr.numElements, elementSize)
+        else
+            printf("%08x %8x Unknown chunk %d\n", ptr, size, kind)
+        ptr = ptr + size
+    printf("\n")

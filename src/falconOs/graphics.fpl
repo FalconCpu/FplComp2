@@ -1,6 +1,3 @@
-class SystemVariables
-    var blitterOwner: GraphicsContext?
-
 class Blitter
     var   cmd         : Int    # 32 bit command register
     var   x1          : Short
@@ -54,7 +51,7 @@ class GraphicsContext()
             val wait = 1
 
         # get the blitter
-        val sysvars = (0x00000100:SystemVariables)
+        val sysvars = (0x0000080:SysVars)
         if sysvars.blitterOwner = this
             return
         sysvars.blitterOwner = this

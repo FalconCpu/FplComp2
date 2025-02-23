@@ -12,11 +12,12 @@ enum class StopAt {
     IRGEN,
     OPTIMIZE,
     ASSEMBLY,
+    EXECUTABLE,
     EXECUTE
 }
 
-fun runAssembler(filename:String) {
-    val process = ProcessBuilder("f32asm.exe", filename)
+fun runAssembler(filenames:List<String>) {
+    val process = ProcessBuilder("f32asm.exe", *filenames.toTypedArray())
         .redirectError(ProcessBuilder.Redirect.INHERIT)
         .start()
 
@@ -35,7 +36,7 @@ fun runProgram() : String {
     return process.inputStream.bufferedReader().readText().replace("\r\n", "\n")
 }
 
-fun compile(files:List<Lexer>, stopAt:StopAt) : String {
+fun compile(files:List<Lexer>, stopAt:StopAt, assemblyFiles:List<String> = emptyList()) : String {
     Log.clear()
     allFunctions.clear()
     DataSegment.clear()
@@ -82,9 +83,11 @@ fun compile(files:List<Lexer>, stopAt:StopAt) : String {
     val asmFile = FileWriter("asm.f32")
     asmFile.write(asm.toString())
     asmFile.close()
-    runAssembler("asm.f32")
+    runAssembler(assemblyFiles + "asm.f32")
     if (Log.hasErrors())
         return Log.getErrors()
+    if (stopAt == StopAt.EXECUTABLE)
+        return asm.toString()
 
     val output = runProgram()
     if (Log.hasErrors())

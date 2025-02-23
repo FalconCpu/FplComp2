@@ -1,0 +1,24 @@
+
+extern fun abort(exc: Int)
+
+fun Boot()
+    initializeMemory()
+    main()
+    abort(0)
+
+const EXCEPTION_INSTRUCTION_ACCESS_FAULT = 1
+const EXCEPTION_ILLEGAAL_INSTRUCTION     = 2
+const EXCEPTION_BREAKPOINT               = 3
+const EXCEPTION_MISALIGNED_LOAD          = 4
+const EXCEPTION_LOAD_ACCESS_FAULT        = 5
+const EXCEPTION_MISALIGNED_STORE         = 6
+const EXCEPTION_STORE_ACCESS_FAULT       = 7
+const EXCEPTION_ENVIRONMENT_CALL         = 8
+
+const ERROR_MEMORY_CORRUPT               = 9
+const ERROR_DOUBLE_FREE                  = 10
+const ERROR_OUT_OF_MEMORY                = 11
+
+fun ExceptionHandler(exc: Int)
+    printf("Exception %d\n", exc)
+    abort(exc)

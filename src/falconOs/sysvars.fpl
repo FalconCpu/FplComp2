@@ -1,0 +1,8 @@
+# A single instance of this class is placed at address 0x000080 - used to track values global to all tasks
+
+class SysVars
+    var heap_pointer : Int
+    var heap_end     : Int
+    var blitterOwner : GraphicsContext?
+    var runningTask  : TaskControlBlock
+    var allTasks     : TaskControlBlock? = null

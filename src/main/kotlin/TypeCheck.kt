@@ -608,7 +608,7 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val oldPathContextBreak = pathContextBreak
             pathContextBreak = mutableListOf<PathContext>()
             val cond = expr.typeCheckBool(scope)
-            if (!(cond is TastIntLiteral && cond.value==0) ) // unless we have a 'while true'
+            if (!(cond is TastIntLiteral && cond.value==1) ) // unless we have a 'while true'
                 pathContextBreak!! += pathContextFalse       // then add a path context for terminating the loop
             pathContext = pathContextTrue
             val ret = TastWhile(location, cond, symbolTable)
@@ -667,7 +667,7 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             currentFunction = function
             for(stmt in statements)
                 ret.add(stmt.typeCheck(symbolTable))
-            if (currentFunction.returnType!= UnitType && !pathContext.unreachable)
+            if (currentFunction.returnType!= UnitType && !pathContext.unreachable && !qualifiers.contains(TokenKind.EXTERN))
                 Log.error(location,"Function does not return a value along all paths")
             currentFunction = oldFunction
             pathContext = oldPathContext
@@ -1030,7 +1030,7 @@ private fun AstClass.identifyConstructorParams() {
 
     // Identify the parameters for the constructor
     val tcParams = params.generateSymbols(symbolTable)
-    constructor = Function(location, name, tcParams, params.isVariadic, UnitType, klass)
+    constructor = Function(location, name, tcParams, params.isVariadic, UnitType, klass, false)
     klass.constructor = constructor
     allFunctions.add(constructor)
     constructorSymbolTable.add(constructor.thisSymbol!!)
@@ -1044,7 +1044,7 @@ private fun AstFunction.identifyFunctionParameters(scope: SymbolTable, parentCla
     val resultType = retType?.resolveType(scope) ?: UnitType
     val functionType = FunctionType.make(tcParams.map { it.type }, params.isVariadic, resultType)
     val qualifiedName = if (parentClass==null) name else "$parentClass/$name"
-    function = Function(location, qualifiedName, tcParams, params.isVariadic, resultType, parentClass)
+    function = Function(location, qualifiedName, tcParams, params.isVariadic, resultType, parentClass, qualifiers.contains(TokenKind.EXTERN))
     allFunctions.add(function)
     val sym = FunctionSymbol(location, name, functionType, function)
     tcParams.forEach { symbolTable.add(it) }

@@ -11,7 +11,7 @@ class MethodCallsTest {
 
     private fun runTest(input: String, expected: String) {
         val lexers = stdLibLexers + listOf(Lexer("input.fpl", StringReader(input)))
-        val ret = compile(lexers, StopAt.EXECUTE)
+        val ret = compile(lexers, StopAt.EXECUTE, listOf("src/stdlib/start.f32"))
         assertEquals(expected, ret)
     }
 

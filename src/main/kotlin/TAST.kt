@@ -364,7 +364,7 @@ sealed class TastBlock(location: Location, val symbolTable: SymbolTable) : TastS
 }
 
 class TastTopLevel(location: Location, symbolTable: SymbolTable) : TastBlock(location, symbolTable) {
-    val function = Function(Location.nullLocation, "<TopLevel>", emptyList(), false, UnitType, null)
+    val function = Function(Location.nullLocation, "<TopLevel>", emptyList(), false, UnitType, null, false)
         .also{allFunctions.add(it)}
 
     fun dump(): String {

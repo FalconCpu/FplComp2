@@ -6,52 +6,100 @@ import java.io.FileReader
 import java.io.StringReader
 
 class OsTests   {
-    val stdLibFiles = listOf("hwregs.fpl","memory.fpl", "string.fpl", "print.fpl", "graphics.fpl")
+    val stdLibFiles = listOf("hwregs.fpl", "print.fpl")
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
+    val osLibFiles = listOf("boot.fpl", "sysvars.fpl", "memory.fpl", "tasks.fpl", "graphics.fpl")
+    val osLibLexers = osLibFiles.map { Lexer("falconOs/$it", FileReader("src/falconOs/$it")) }
 
     private fun runTest(input: String) {
-        val lexers = stdLibLexers + listOf(Lexer("input.fpl", StringReader(input)))
-        val ret = compile(lexers, StopAt.EXECUTE)
+        val lexers = stdLibLexers + osLibLexers + listOf(Lexer("input.fpl", StringReader(input)))
+        val ret = compile(lexers, StopAt.EXECUTABLE, listOf("src/falconOs/start.f32"))
         assertEquals("", Log.getErrors())
     }
 
     @Test
-    fun basicGraphics() {
+    fun basicOs() {
         val prog = """
             fun main()
+                val task1 = newTask((test1:Int), "task1")    
+                initializeRunQueue(task1)
+                printf("Task1 = %x\n", task1)
+                val task2 = newTask((test2:Int), "task2")
+                addTaskToRunQueue(task2)
+                printf("Task2 = %x\n", task2)
+                val task3 = newTask((test3:Int), "task3")
+                addTaskToRunQueue(task3)
+                printf("Task3 = %x\n", task3)
+                listTasks()
+                Scheduler()
+                
+            fun test1()
+                val hwregs = (0xE0000000:HwRegs)
+                var i = 0
+                hwregs.led = i
+
+            fun test2()
+                val hwregs = (0xE0000000:HwRegs)
+                var i = 0
+                while true
+                    hwregs.sevenSeg = i
+                    i += 1
+                    yield()
+                    
+            fun test3()
                 val gfx = new GraphicsContext()
-                gfx.fillRect(0, 0, 640, 480, 2)     # DARK GREEN
+                var color = 0
+                while true
+                    gfx.fillRect(20,20,200,200,color)
+                    color += 1
+                    yield()
 
-                for x in 0 to gfx.screenWidth/10
-                    gfx.drawLine(x*10, 0, x*10, (gfx.screenHeight:Int), 0xff) # WHITE
-
-                for y in 0 to gfx.screenHeight/10
-                    gfx.drawLine(0, y*10, (gfx.screenWidth:Int), y*10, 0xFF)
-                
-                # Step 3: Draw text
-                gfx.drawString(10, 10, "Hello, FPGA!", 0x09)    # BLUE
-                
-                # Step 4: Draw a filled rectangle (yellow)
-                gfx.fillRect(100, 100, 200, 150, 0x0B)
-                
-                # Step 5: Draw some individual pixels (cyan)
-                gfx.drawPixel(51, 51, 0x0B)
-                gfx.drawPixel(51, 50, 0x0B)
-                gfx.drawPixel(50, 50, 0x0B)
-                gfx.drawPixel(50, 51, 0x0B)
-                
-                # Step 6: Scroll up and down
-                for i in 1 to 10
-                    gfx.scrollVertical(1)
-                for i in 1 to 10
-                    gfx.scrollVertical(-1)
-                
-                # Step 7: Set transparency color (to white)
-                gfx.setTransparencyColor(0xFFFF)
-                
         """.trimIndent()
 
         runTest(prog)
-
     }
+
+    @Test
+    fun messagesOs() {
+        val prog = """
+            fun main()
+                val task1 = newTask((test1:Int), "task1")    
+                addTaskToRunQueue(task1)
+                printf("Task1 = %x\n", task1)
+                val task2 = newTask((test2:Int), "task2")
+                addTaskToRunQueue(task2)
+                printf("Task2 = %x\n", task2)
+                val task3 = newTask((test3:Int), "task3")
+                addTaskToRunQueue(task3)
+                printf("Task3 = %x\n", task3)
+                listTasks()
+                Scheduler()
+                
+            fun test1()
+                while true
+                    
+                var i = 0
+                hwregs.led = i
+
+            fun test2()
+                val hwregs = (0xE0000000:HwRegs)
+                var i = 0
+                while true
+                    hwregs.sevenSeg = i
+                    i += 1
+                    yield()
+                    
+            fun test3()
+                val gfx = new GraphicsContext()
+                var color = 0
+                while true
+                    gfx.fillRect(20,20,200,200,color)
+                    color += 1
+                    yield()
+
+        """.trimIndent()
+
+        runTest(prog)
+    }
+
 }

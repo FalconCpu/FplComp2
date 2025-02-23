@@ -380,9 +380,13 @@ class Parser(private val lexer: Lexer) {
         block.add(ret)
 
         if (lookahead.kind==INDENT) {
-            parseIndentedBlock(ret)
+            if (qualifiers.contains(EXTERN))
+                Log.error(lookahead.location, "Extern functions cannot have body")
+            else
+                parseIndentedBlock(ret)
         } else
-            Log.error(lookahead.location, "Expected indented block after function declaration")
+            if (!qualifiers.contains(EXTERN))
+                Log.error(lookahead.location, "Expected indented block after function declaration")
         parseOptionalEnd(FUN)
     }
 
@@ -693,7 +697,7 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseQualifiers(block: AstBlock) {
         val qualifiers = mutableSetOf<TokenKind>()
-        while(lookahead.kind in listOf(VIRTUAL, OVERRIDE))
+        while(lookahead.kind in listOf(VIRTUAL, OVERRIDE, EXTERN))
             qualifiers.add(nextToken().kind)
         if (qualifiers.contains(OVERRIDE) && qualifiers.contains(VIRTUAL))
             Log.error(lookahead.location, "Cannot use both virtual and override")
@@ -731,7 +735,7 @@ class Parser(private val lexer: Lexer) {
             VAR -> parseFieldDecl(block)
             VAL -> parseFieldDecl(block)
             FUN -> parseFunction(block, emptySet())
-            OVERRIDE, VIRTUAL -> parseQualifiers(block)
+            OVERRIDE, VIRTUAL, EXTERN -> parseQualifiers(block)
             CLASS -> throw ParseError(lookahead.location, "Class declarations are not allowed to nest")
             RETURN, WHILE, IDENTIFIER, OPENB, FOR, IF ->
                 throw ParseError(lookahead.location, "Statements not allowed in class body")
@@ -747,6 +751,7 @@ class Parser(private val lexer: Lexer) {
             CLASS -> parseClass(block)
             CONST -> parseConstDecl(block)
             ENUM -> parseEnum(block)
+            OVERRIDE, VIRTUAL, EXTERN -> parseQualifiers(block)
             WHILE -> throw ParseError(lookahead.location, "While statements are not allowed at top level")
             RETURN -> throw ParseError(lookahead.location, "Return statements are not allowed at top level")
             FOR -> throw ParseError(lookahead.location, "For statements are not allowed at top level")

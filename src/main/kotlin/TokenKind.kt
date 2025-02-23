@@ -79,6 +79,7 @@ enum class TokenKind(val text:String, val lineContinues: Boolean) {
     ARRAY("Array", false),
     VIRTUAL("virtual", false),
     OVERRIDE("override", false),
+    EXTERN("extern", false),
     ERROR("<error>", false);
 
     companion object {

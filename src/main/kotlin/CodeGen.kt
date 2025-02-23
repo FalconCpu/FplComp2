@@ -104,7 +104,12 @@ fun TastExpression.codeGen() : IRVal {
         }
 
 
-        is TastFunctionLiteral -> TODO()
+        is TastFunctionLiteral -> {
+            val ret = currentFunc.newTemp()
+            currentFunc.add(InstrLeaFunc(ret, function))
+            ret
+        }
+
         is TastTypeDescriptor -> TODO()
         is TastNeg -> TODO()
         is TastMethodCall -> TODO()

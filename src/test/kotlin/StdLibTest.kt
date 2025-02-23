@@ -10,7 +10,7 @@ class StdLibTest {
 
     private fun runTest(input: String, expected: String) {
         val lexers = stdLibLexers + listOf(Lexer("input.fpl", StringReader(input)))
-        val ret = compile(lexers, StopAt.EXECUTE)
+        val ret = compile(lexers, StopAt.EXECUTE,  listOf("src/stdlib/start.f32"))
         assertEquals(expected, ret)
     }
 
@@ -527,5 +527,25 @@ class StdLibTest {
 
         runTest(prog,expected)
     }
+
+
+    @Test
+    fun externFuncTest() {
+        val prog = """
+            extern fun add(a:Int, b:Int) -> Int
+            
+            fun main()
+                var result = add(5, 3)
+                printf("Result: %d\n", result)
+        """.trimIndent()
+
+        val expected = """
+            ERROR: Line 784: Undefined label '/add'
+
+        """.trimIndent().replace("\n", "\r\n")
+
+        runTest(prog,expected)
+    }
+
 }
 

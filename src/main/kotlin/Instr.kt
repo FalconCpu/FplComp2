@@ -27,6 +27,7 @@ sealed class Instr() {
         is InstrLoadGlobal -> "LD$size $dest, GLOBAL[$offset]"
         is InstrStoreGlobal -> "ST$size $data, GLOBAL[$offset]"
         is InstrClassRef -> "LEA $dest, CLASS($data)"
+        is InstrLeaFunc -> "LEA $dest, $func"
     }
 
     fun getReads() : List<IRVal> = when(this) {
@@ -49,6 +50,7 @@ sealed class Instr() {
         is InstrStoreField -> listOf(data,addr)
         is InstrLoadGlobal -> emptyList()
         is InstrStoreGlobal -> listOf(data)
+        is InstrLeaFunc -> emptyList()
     }
 
     fun getWrites() : IRVal? = when(this) {
@@ -71,6 +73,7 @@ sealed class Instr() {
         is InstrLoadGlobal -> dest
         is InstrStoreGlobal -> null
         is InstrClassRef -> dest
+        is InstrLeaFunc -> dest
     }
 }
 
@@ -92,6 +95,7 @@ class InstrStoreField(val size:Int, val data:IRVal, val addr:IRVal, val offset: 
 class InstrLoadGlobal(val size:Int, val dest:IRVal, val offset: GlobalVarSymbol) : Instr()
 class InstrStoreGlobal(val size:Int, val data:IRVal, val offset: GlobalVarSymbol) : Instr()
 class InstrLea(val dest:IRVal, val data:String) : Instr()
+class InstrLeaFunc(val dest:IRVal, val func:Function) : Instr()
 class InstrClassRef(val dest:IRVal, val data:ClassType) : Instr()
 
 sealed class IRVal(val name:String) {

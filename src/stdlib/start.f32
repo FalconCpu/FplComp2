@@ -1,0 +1,9 @@
+ld $31, 0x4000000
+sub $31, 4
+stw $30, $31[0]
+jsr /initializeMemory
+jsr init
+jsr /main
+ldw $30, $31[0]
+add $31, 4
+ret
