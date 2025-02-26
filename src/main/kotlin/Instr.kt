@@ -28,6 +28,7 @@ sealed class Instr() {
         is InstrStoreGlobal -> "ST$size $data, GLOBAL[$offset]"
         is InstrClassRef -> "LEA $dest, CLASS($data)"
         is InstrLeaFunc -> "LEA $dest, $func"
+        is InstrConstArray -> "LEA $dest, CONST_ARRAY${array.index}"
     }
 
     fun getReads() : List<IRVal> = when(this) {
@@ -51,6 +52,7 @@ sealed class Instr() {
         is InstrLoadGlobal -> emptyList()
         is InstrStoreGlobal -> listOf(data)
         is InstrLeaFunc -> emptyList()
+        is InstrConstArray -> emptyList()
     }
 
     fun getWrites() : IRVal? = when(this) {
@@ -74,6 +76,7 @@ sealed class Instr() {
         is InstrStoreGlobal -> null
         is InstrClassRef -> dest
         is InstrLeaFunc -> dest
+        is InstrConstArray -> dest
     }
 }
 
@@ -97,6 +100,7 @@ class InstrStoreGlobal(val size:Int, val data:IRVal, val offset: GlobalVarSymbol
 class InstrLea(val dest:IRVal, val data:String) : Instr()
 class InstrLeaFunc(val dest:IRVal, val func:Function) : Instr()
 class InstrClassRef(val dest:IRVal, val data:ClassType) : Instr()
+class InstrConstArray(val dest:IRVal, val array: TastConstArray) : Instr()
 
 sealed class IRVal(val name:String) {
     var index = 0

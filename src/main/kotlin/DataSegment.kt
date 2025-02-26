@@ -4,11 +4,13 @@ object DataSegment {
     val strings = mutableListOf<String>()
     val allClasses = mutableListOf<ClassType>()
     val globalVariables = mutableListOf<GlobalVarSymbol>()
+    val constArrays = mutableListOf<TastConstArray>()
 
     fun clear() {
         strings.clear()
         globalVariables.clear()
         allClasses.clear()
+        constArrays.clear()
     }
 
     fun getStringRef(string: String) : String {
@@ -35,10 +37,48 @@ object DataSegment {
         sb.append("\n")
     }
 
+    private fun TastConstArray.emit(sb: StringBuilder) {
+        sb.append("dcw ${elements.size}\n")
+        sb.append("ConstArray_$index:\n")
+        val elementType = (type as ArrayType).elementType
+        when(elementType) {
+            is IntType ->
+                for(element in elements)
+                    sb.append("dcw ${element.getCompileTimeConstant()}\n")
+            is CharType ->
+                for(element in elements.chunked(4)) {
+                    sb.append("dcb ${element[0].getCompileTimeConstant()}")
+                    if (element.size>1)
+                        sb.append(", ${element[1].getCompileTimeConstant()}")
+                    if (element.size>2)
+                        sb.append(", ${element[2].getCompileTimeConstant()}")
+                    if (element.size>3)
+                        sb.append(", ${element[3].getCompileTimeConstant()}")
+                    sb.append("\n")
+                }
+            is ShortType ->
+                for(element in elements.chunked(2)) {
+                    sb.append("dch ${element[0].getCompileTimeConstant()}")
+                    if (element.size>1)
+                        sb.append(", ${element[1].getCompileTimeConstant()}")
+                    sb.append("\n")
+                }
+            is StringType ->
+                for(element in elements)
+                    sb.append("dcw ${getStringRef((element as TastStringLiteral).value)}\n")
+            else -> error("Unknown array element type")
+        }
+        sb.append("\n")
+    }
+
     fun output(sb:StringBuilder) {
         // Output class descriptors
         for(klass in allClasses)
             klass.emitDescriptor(sb)
+
+        // Output constant arrays
+        for(ca in constArrays)
+            ca.emit(sb)
 
         // Output all string literals
         for((index,string) in strings.withIndex()) {

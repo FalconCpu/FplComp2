@@ -127,6 +127,7 @@ class RegisterAllocator(private val func: Function, private val livemap: Livemap
             is InstrStoreGlobal -> InstrStoreGlobal(size, replace(data), offset)
             is InstrClassRef -> InstrClassRef(replace(dest), data)
             is InstrLeaFunc -> InstrLeaFunc(replace(dest), func)
+            is InstrConstArray -> InstrConstArray(replace(dest), array)
         }
         new.index = index
         return new

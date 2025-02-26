@@ -41,7 +41,7 @@ class TaskControlBlock
     var firstMessage : Message? = null
     var lastMessage : Message? = null
 
-class Message(val kind:Int, val data0:Int, val data1:Int, val data2:Int)
+class Message(val data:Int)
     var next  : Message? = null
 
 extern fun yield()
@@ -51,8 +51,16 @@ extern fun runTask(task:TaskControlBlock)
 fun Scheduler()
     val sysVars = (0x000080 : SysVars)
     val task = sysVars.runningTask
+
+    # if task has gone to sleep, remove it from the running queue
+    if task.sleeping
+        printf("Task %s is sleeping, waiting for message\n", task.name)
+        task.nextRunningTask.prevRunningTask = task.prevRunningTask
+        task.prevRunningTask.nextRunningTask = task.nextRunningTask
+
+    # round robin to the next task
     val nextTask = task.nextRunningTask
-    # printf("Scheduler: Running task %x\n", nextTask)
+    printf("Scheduler: Running task %s\n", nextTask.name)
     sysVars.runningTask = nextTask
     runTask(nextTask)
 
@@ -102,8 +110,9 @@ fun endTask()
     val sysVars = (0x000080 : SysVars)
     val task = sysVars.runningTask
     printf("Ending task %x %s\n", task, task.name)
-    task.nextRunningTask.prevRunningTask = task.prevRunningTask
-    task.prevRunningTask.nextRunningTask = task.nextRunningTask
+    if not task.sleeping
+        task.nextRunningTask.prevRunningTask = task.prevRunningTask
+        task.prevRunningTask.nextRunningTask = task.nextRunningTask
     val nextTask = task.nextTask
     if nextTask!=null
         nextTask.prevTask = task.prevTask
@@ -115,28 +124,16 @@ fun endTask()
     delete task
     Scheduler()
 
-fun sleep2()
-    # called from sleep()
-    val sysVars = (0x000080 : SysVars)
-    val task = sysVars.runningTask
-    if task.sleeping
-        printf("Error: Task %x is already sleeping\n", task)
-        return
-
-    task.sleeping = true
-    task.nextRunningTask.prevRunningTask = task.prevRunningTask
-    task.prevRunningTask.nextRunningTask = task.nextRunningTask
-    Scheduler()
-
-fun sendMessage(task:TaskControlBlock, kind:Int, data0:Int, data1:Int, data2:Int)
-    val msg = new Message(kind, data0, data1, data2)
+fun sendMessage(task:TaskControlBlock, message:Message)
     val lm = task.lastMessage
     if lm != null
-        lm.next = msg
+        lm.next = message
+        task.lastMessage = message
     else
-        task.firstMessage = msg
-        task.lastMessage = msg
+        task.firstMessage = message
+        task.lastMessage = message
     if task.sleeping
+        printf("Task %s is waking up to process message\n", task.name)
         addTaskToRunQueue(task)
 
 fun getMessage() -> Message
@@ -149,13 +146,14 @@ fun getMessage() -> Message
             if msg.next = null
                 task.lastMessage = null
             return msg
-        sleep()
+        task.sleeping = true
+        yield()
 
 fun findTask(name:String) -> TaskControlBlock?
     val sysVars = (0x000080 : SysVars)
     var task = sysVars.allTasks
     while task != null
-        if task.name == name
+        if task.name = name
             return task
         task = task.nextTask
     return null

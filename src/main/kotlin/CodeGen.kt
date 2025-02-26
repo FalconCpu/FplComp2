@@ -140,6 +140,12 @@ fun TastExpression.codeGen() : IRVal {
         is TastIs -> {
             TODO()
         }
+
+        is TastConstArray -> {
+            val dest = currentFunc.newTemp()
+            currentFunc.add(InstrConstArray(dest, this))
+            dest
+        }
     }
 }
 

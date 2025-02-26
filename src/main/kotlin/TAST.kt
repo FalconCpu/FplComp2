@@ -285,6 +285,12 @@ sealed class Tast(val location: Location) {
                 sb.append("Is $isNot $compType\n")
                 expr.dump(indent + 1, sb)
             }
+
+            is TastConstArray -> {
+                sb.append("ConstArray $type\n")
+                for (expr in elements)
+                    expr.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -325,6 +331,7 @@ class TastNewArray(location: Location, val size:TastExpression, val isLocal:Bool
 class TastIfExpression(location: Location, val cond: TastExpression, val thenExpr: TastExpression, val elseExpr: TastExpression, type:Type) : TastExpression(location,type)
 class TastNot(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 class TastIs(location: Location, val expr: TastExpression, val compType:Type, val isNot:Boolean) : TastExpression(location, BoolType)
+class TastConstArray(location: Location, val elements: List<TastExpression>, val index:Int,  type:Type) : TastExpression(location, type)
 
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type)
     : TastExpression(location, type)
@@ -377,8 +384,10 @@ class TastTopLevel(location: Location, symbolTable: SymbolTable) : TastBlock(loc
 class TastWhile(location: Location, val expr: TastExpression, symbolTable: SymbolTable)
     : TastBlock(location, symbolTable)
 
-class TastRepeat(location: Location, val expr: TastExpression, symbolTable: SymbolTable)
-    : TastBlock(location, symbolTable)
+class TastRepeat(location: Location, symbolTable: SymbolTable)
+    : TastBlock(location, symbolTable) {
+        lateinit var expr: TastExpression
+    }
 
 class TastForRange(location: Location, val sym: VarSymbol, val from: TastExpression, val to: TastExpression, val comparator: TokenKind, symbolTable: SymbolTable)
     : TastBlock(location, symbolTable)

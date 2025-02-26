@@ -35,6 +35,8 @@ ShortTerm:
    static methods
    ?: operator
    ?. operator
+   const arrays
+   unsigned types
 
 Medium term:
    splat operator
@@ -59,3 +61,4 @@ optimizer:
    function inlining
    function elimination (walk the call graph and remove unused functions)
    hoisting
+   tail call elimination

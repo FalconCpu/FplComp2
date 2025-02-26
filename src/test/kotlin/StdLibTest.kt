@@ -547,5 +547,43 @@ class StdLibTest {
         runTest(prog,expected)
     }
 
+    @Test
+    fun constArrayTest() {
+        val prog = """
+            fun main()
+                val array = const Array<Int>(6,5,4,3,2,1)
+                for i in array
+                    printf("%d\n", i)
+        """.trimIndent()
+        val expected = """
+            6
+            5
+            4
+            3
+            2
+            1
+
+        """.trimIndent()
+        runTest(prog,expected)
+    }
+
+    @Test
+    fun constArrayStringTest() {
+        val prog = """
+            fun main()
+                val array = const Array<String>("Hello", "World", "!")
+                for i in array
+                    printf("%s\n", i)
+        """.trimIndent()
+        val expected = """
+            Hello
+            World
+            !
+
+        """.trimIndent()
+        runTest(prog,expected)
+    }
+
+
 }
 

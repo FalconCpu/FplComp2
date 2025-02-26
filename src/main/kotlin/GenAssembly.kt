@@ -145,6 +145,7 @@ private fun Instr.genAssembly() = when(this) {
     is InstrStoreGlobal -> "${getStoreSize(size)} $data,$29[${offset.offset}]"
     is InstrClassRef -> "ld $dest, Class/$data"
     is InstrLeaFunc -> "ld $dest, /${func.name}"
+    is InstrConstArray -> "ld $dest, ConstArray_${array.index}"
 }
 
 fun Function.genAssembly(sb:StringBuilder) {

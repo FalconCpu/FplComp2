@@ -117,15 +117,21 @@ class Parser(private val lexer: Lexer) {
         return AstIndex(loc.location, lhs, index)
     }
 
-    private fun parseFunctionCall(lhs: AstExpression) : AstExpression {
-        val loc = expect(OPENB)
-        val args = mutableListOf<AstExpression>()
+    private fun parseExpressionList() : List<AstExpression> {
+        val ret = mutableListOf<AstExpression>()
+        expect(OPENB)
         if (lookahead.kind!=CLOSEB)
             do {
-                args.add(parseExpression())
+                ret.add(parseExpression())
             } while (canTake(COMMA))
         expect(CLOSEB)
-        return AstFunctionCall(loc.location, lhs, args)
+        return ret
+    }
+
+    private fun parseFunctionCall(lhs: AstExpression) : AstExpression {
+        val loc = lookahead.location
+        val args = parseExpressionList()
+        return AstFunctionCall(loc, lhs, args)
     }
 
     private fun parseMemberExpression(lhs: AstExpression) : AstExpression {
@@ -158,15 +164,25 @@ class Parser(private val lexer: Lexer) {
             return AstNewArray(tok.location, type, size, isLocal)
         } else {
             val type = parseTypeIdentifier()
-            expect(OPENB)
-            val args = mutableListOf<AstExpression>()
-            if (lookahead.kind!=CLOSEB)
-                do {
-                    args.add(parseExpression())
-                } while (canTake(COMMA))
-            expect(CLOSEB)
+            val args = parseExpressionList()
             return AstConstructor(tok.location, type, args, isLocal)
         }
+    }
+
+    private fun parseOptArrayType() : AstType? {
+        if (canTake(LT)) {
+            val ret = parseType()
+            expect(GT)
+            return ret
+        }
+        return null
+    }
+
+    private fun parseConstArray() : AstExpression {
+        val loc = expect(ARRAY)
+        val astType = parseOptArrayType()
+        val values = parseExpressionList()
+        return AstConstArray(loc.location, astType, values)
     }
 
     private fun parsePrefix() : AstExpression {
@@ -174,6 +190,8 @@ class Parser(private val lexer: Lexer) {
             return AstUnaryOp(lookahead.location, MINUS, parsePrefix())
         if (canTake(NOT))
             return AstUnaryOp(lookahead.location, NOT, parsePrefix())
+        if (canTake(CONST))
+            return parseConstArray()
         if (lookahead.kind==NEW || lookahead.kind==LOCAL)
             return parseNew()
         return parsePostfix()

@@ -274,6 +274,13 @@ sealed class AstNode (val location:Location) {
                 expr.dump(indent+1, sb)
                 compType.dump(indent+1, sb)
             }
+
+            is AstConstArray -> {
+                sb.append("ConstArray\n")
+                elType?.dump(indent+1, sb)
+                for(expr in elements)
+                    expr.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -311,6 +318,7 @@ class AstNewArray(location: Location, val elType: AstType, val size: AstExpressi
 class AstConstructor(location: Location, val astType: AstTypeIdentifier, val args: List<AstExpression>, val isLocal:Boolean) : AstExpression(location)
 class AstIfExpression(location: Location, val cond: AstExpression, val thenExpr:AstExpression, val elseExpr:AstExpression) : AstExpression(location)
 class AstIsExpression(location: Location, val expr: AstExpression, val compType: AstType, val isnot: Boolean) : AstExpression(location)
+class AstConstArray(location: Location, val elType: AstType?, val elements: List<AstExpression>) : AstExpression(location)
 
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)

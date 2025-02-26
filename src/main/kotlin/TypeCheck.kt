@@ -59,15 +59,16 @@ private fun AstType.resolveType(scope: SymbolTable): Type {
 // ----------------------------------------------------------------------------
 
 fun TastExpression.isCompileTimeConstant() : Boolean {
-    return this is TastIntLiteral
+    return this is TastIntLiteral || this is TastCharLiteral
 }
 
 fun TastExpression.getCompileTimeConstant() : Int {
-    check (this is TastIntLiteral)
-    return this.value
+    return when (this) {
+        is TastIntLiteral -> value
+        is TastCharLiteral -> value.code
+        else -> error("Not a compile time constant")
+    }
 }
-
-
 
 // ----------------------------------------------------------------------------
 //                       BinaryOperations
@@ -285,6 +286,12 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
                         TastError(location,"No operation defined for unary minus '${arg.type}'")
                 }
 
+                TokenKind.NOT -> {
+                    val arg = expr.typeCheckRvalue(scope)
+                    arg.checkType(BoolType)
+                    TastBinaryOp(location, AluOp.XORI, arg, TastIntLiteral(location, 1, IntType), BoolType)
+                }
+
                 else -> {
                     TastError(location,"Invalid Unary operator $op")
                 }
@@ -350,8 +357,19 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
 
                 TastIs(location, lhs, type, this.isnot)
             }
+        }
 
-
+        is AstConstArray -> {
+            val elements = this.elements.map { it.typeCheckRvalue(scope) }
+            val elementType = elType?.resolveType(scope) ?: elements[0].type
+            for(element in elements) {
+                element.checkType(elementType)
+                if (!element.isCompileTimeConstant() && element !is TastStringLiteral)
+                    Log.error(element.location, "Value is not compile time constant")
+            }
+            val ret = TastConstArray(location, elements, DataSegment.constArrays.size, ArrayType.make(elementType))
+            DataSegment.constArrays.add(ret)
+            ret
         }
     }
 }
@@ -624,14 +642,14 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
             val oldPathContextBreak = pathContextBreak
             pathContextBreak = mutableListOf()
             val pathContext0 = pathContext
-            val cond = expr.typeCheckBool(scope)
             val pathContext1 = pathContextTrue
             pathContext = listOf(pathContext0, pathContextFalse).merge()
-            val ret = TastRepeat(location, cond, symbolTable)
+            val ret = TastRepeat(location, symbolTable)
             for (stmt in statements)
                 ret.add(stmt.typeCheck(ret.symbolTable))
+            ret.expr = expr.typeCheckBool(scope)
             pathContext = pathContext1
-            if (!(cond.isCompileTimeConstant() && cond.getCompileTimeConstant()==0))  // if the loop can terminate then add the fallthrough context
+            if (!(ret.expr.isCompileTimeConstant() && ret.expr.getCompileTimeConstant()==0))  // if the loop can terminate then add the fallthrough context
                 pathContextBreak!! += pathContext
             pathContext = pathContextBreak!!.merge()
             pathContextBreak = oldPathContextBreak
@@ -720,7 +738,7 @@ private fun AstStatement.typeCheck(scope: SymbolTable) : TastStatement{
                 if (currentFunction.returnType != UnitType)
                     Log.error(location, "Function should return a value of type ${currentFunction.returnType}")
             } else
-                currentFunction.returnType.checkType(expr)
+                expr.checkType(currentFunction.returnType)
             pathContext = pathContext.setUnreachable()
             TastReturn(location, expr)
         }

@@ -30,6 +30,7 @@ HWREG_SIMULATION = 0x30     # Reads as 1 in simulator, 0 on silicon
 
 Boot:
     ld $sp, 0x04000000            # Initialize the stack pointer
+    jsr init
     jmp /Boot                     # jump into the fpl boot code
 
 # ############################################################
@@ -241,52 +242,3 @@ ExceptionHandler:
     ld $sp, 0x04000000            # Setup the supervisor stack
     ld $29, 0
     jmp /Scheduler
-
-
-# ############################################################
-#                      Sleep Task
-# ############################################################
-# Copy the contents of all the registers into a task control
-# block, setup the supervisor stack and jump to the fpl coded
-# scheduler
-
-/sleep:
-    cfg $29, !escratch, $29     # Get the task control block into $29
-    ld $1,$1                    # need to allow the pipeline to flush
-    stw $30, $29[0]             # set the PC to be the return address of the call to yield()
-    stw $1, $29[4]              # save all the registers into the tcb
-    stw $2, $29[8]
-    stw $3, $29[12]
-    stw $4, $29[16]
-    stw $5, $29[20]
-    stw $6, $29[24]
-    stw $7, $29[28]
-    stw $8, $29[32]
-    stw $9, $29[36]
-    stw $10, $29[40]
-    stw $11, $29[44]
-    stw $12, $29[48]
-    stw $13, $29[52]
-    stw $14, $29[56]
-    stw $15, $29[60]
-    stw $16, $29[64]
-    stw $17, $29[68]
-    stw $18, $29[72]
-    stw $19, $29[76]
-    stw $20, $29[80]
-    stw $21, $29[84]
-    stw $22, $29[88]
-    stw $23, $29[92]
-    stw $24, $29[96]
-    stw $25, $29[100]
-    stw $26, $29[104]
-    stw $27, $29[108]
-    stw $28, $29[112]
-    stw $30, $29[120]
-    stw $sp, $29[124]
-    cfg $1, !escratch             # Get the user's $29 back out of the scratch register
-    stw $1, $29[116]
-
-    ld $sp, 0x04000000            # Setup the supervisor stack
-    ld $29, 0
-    jmp /sleep2
