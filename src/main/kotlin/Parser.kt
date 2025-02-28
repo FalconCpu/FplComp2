@@ -140,6 +140,11 @@ class Parser(private val lexer: Lexer) {
         return AstMember(loc.location, lhs, id.text)
     }
 
+    private fun parseNullAssert(lhs: AstExpression) : AstExpression {
+        val loc = expect(EMARKEMARK)
+        return AstNullAssert(loc.location, lhs)
+    }
+
     private fun parsePostfix() : AstExpression {
         var ret = parsePrimary()
         while(true)
@@ -147,6 +152,7 @@ class Parser(private val lexer: Lexer) {
                 OPENSQ -> parseIndexExpression(ret)
                 OPENB -> parseFunctionCall(ret)
                 DOT -> parseMemberExpression(ret)
+                EMARKEMARK -> parseNullAssert(ret)
                 else -> return ret
             }
     }

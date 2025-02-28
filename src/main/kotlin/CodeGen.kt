@@ -146,6 +146,15 @@ fun TastExpression.codeGen() : IRVal {
             currentFunc.add(InstrConstArray(dest, this))
             dest
         }
+
+        is TastNullAssert -> {
+            val label = currentFunc.newLabel()
+            val e = expr.codeGen()
+//            TODO: Should we runtime check here?
+//            currentFunc.addBranch(AluOp.NEI, e, machineRegs[0], label)
+//            currentFunc.addLabel(label)
+            e
+        }
     }
 }
 

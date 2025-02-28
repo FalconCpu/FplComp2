@@ -7,7 +7,7 @@ import java.io.StringReader
 
 class OsTests   {
     val stdLibFiles = listOf("hwregs.fpl", "string.fpl", "print.fpl")
-    val osLibFiles = listOf("boot.fpl", "sysvars.fpl", "memory.fpl", "tasks.fpl", "graphics.fpl", "keyboard.fpl")
+    val osLibFiles = listOf("boot.fpl", "sysvars.fpl", "memory.fpl", "tasks.fpl", "graphics.fpl", "keyboard.fpl", "window.fpl")
 
     val stdLibLexers = stdLibFiles.map { Lexer("stdlib/$it", FileReader("src/stdlib/$it")) }
     val osLibLexers = osLibFiles.map { Lexer("falconOs/$it", FileReader("src/falconOs/$it")) }
@@ -112,6 +112,26 @@ class OsTests   {
 
         runTest(prog)
     }
+
+    @Test
+    fun windows() {
+        val prog = """
+            fun main()
+                val mngr = new WindowManager()
+                val win1 = new Window(100, 100, 200, 200, "Window 1")
+                val win2 = new Window(300, 300, 200, 200, "Window 2")
+                mngr.addWindow(win1)
+                mngr.addWindow(win2)
+                mngr.draw()
+
+                while true
+                    val dummy = 1
+        """.trimIndent()
+
+        runTest(prog)
+    }
+
+
 
 
 }

@@ -371,6 +371,14 @@ private fun AstExpression.typeCheck(scope: SymbolTable, allowRefinedType:Boolean
             DataSegment.constArrays.add(ret)
             ret
         }
+
+        is AstNullAssert -> {
+            val expr = expr.typeCheckRvalue(scope)
+            return if (expr.type !is NullableType)
+                TastError(location, "Got type ${expr.type} when expecting nullable type")
+            else
+                TastNullAssert(location, expr, expr.type.elementType)
+        }
     }
 }
 

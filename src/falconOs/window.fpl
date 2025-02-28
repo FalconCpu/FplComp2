@@ -1,0 +1,35 @@
+class Window(var x:Int, var y:Int, var width:Int, var height:Int, var title:String)
+    var color = 1
+    var next : Window? = null
+    var prev : Window? = null
+
+const SCREEN_WIDTH = 648
+const SCREEN_HEIGHT = 480
+
+class WindowManager
+    var first : Window? = null
+    var last : Window? = null
+
+    val gfx = new GraphicsContext()
+
+    fun draw()
+        # for now just brute force redraw everything - later we can optimize this
+        gfx.fillRect(0,0,SCREEN_WIDTH,SCREEN_HEIGHT,0)
+        var w = first
+        while w != null
+            gfx.fillRect(w.x, w.y, w.x+w.width, w.y+w.height, w.color)
+            w = w.next
+
+    fun addWindow(w:Window)
+        if last != null
+            w.next = null
+            w.prev = last
+            last!!.next = w
+            last = w
+        else
+            first = w
+            last = w
+            w.next = null
+            w.prev = null
+
+

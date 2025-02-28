@@ -291,6 +291,11 @@ sealed class Tast(val location: Location) {
                 for (expr in elements)
                     expr.dump(indent + 1, sb)
             }
+
+            is TastNullAssert -> {
+                sb.append("NullAssert\n")
+                expr.dump(indent + 1, sb)
+            }
         }
     }
 }
@@ -332,6 +337,7 @@ class TastIfExpression(location: Location, val cond: TastExpression, val thenExp
 class TastNot(location: Location, val expr: TastExpression, type:Type) : TastExpression(location, type)
 class TastIs(location: Location, val expr: TastExpression, val compType:Type, val isNot:Boolean) : TastExpression(location, BoolType)
 class TastConstArray(location: Location, val elements: List<TastExpression>, val index:Int,  type:Type) : TastExpression(location, type)
+class TastNullAssert(location: Location, val expr: TastExpression, type: Type) : TastExpression(location, type)
 
 class TastMember(location: Location, val expr: TastExpression, val member: FieldSymbol, type:Type)
     : TastExpression(location, type)

@@ -281,6 +281,11 @@ sealed class AstNode (val location:Location) {
                 for(expr in elements)
                     expr.dump(indent+1, sb)
             }
+
+            is AstNullAssert -> {
+                sb.append("NullAssert\n")
+                expr.dump(indent+1, sb)
+            }
         }
     }
 }
@@ -319,6 +324,7 @@ class AstConstructor(location: Location, val astType: AstTypeIdentifier, val arg
 class AstIfExpression(location: Location, val cond: AstExpression, val thenExpr:AstExpression, val elseExpr:AstExpression) : AstExpression(location)
 class AstIsExpression(location: Location, val expr: AstExpression, val compType: AstType, val isnot: Boolean) : AstExpression(location)
 class AstConstArray(location: Location, val elType: AstType?, val elements: List<AstExpression>) : AstExpression(location)
+class AstNullAssert(location: Location, val expr: AstExpression) : AstExpression(location)
 
 // Type description classes
 class AstTypeIdentifier(location: Location, val name: String) : AstType(location)
